@@ -1,0 +1,353 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #0b132b;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 40px;
+  color: #ffffff;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 5px 0;
+}
+
+.header p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 14px;
+}
+
+.btnEdit {
+  background: linear-gradient(135deg, #0072ff, #00c6ff);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.btnEdit:hover {
+  opacity: 0.9;
+}
+
+.sectionsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  max-width: 1000px;
+}
+
+.card {
+  background-color: #1c2541;
+  border-radius: 12px;
+  padding: 25px;
+  border: 1px solid #2a3454;
+}
+
+.card h3 {
+  font-size: 18px;
+  margin: 0 0 20px 0;
+  font-weight: 600;
+}
+
+.cardSubtitle {
+  color: #64748b;
+  font-size: 13px;
+  margin: -10px 0 20px 0;
+}
+
+.gridForm {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputGroup label {
+  font-size: 13px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 15px;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+/* Estilo por defecto e inactivo */
+.inputBloqueado {
+  width: 100%;
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 12px 12px 12px 45px;
+  color: #64748b;
+  font-size: 14px;
+  outline: none;
+  cursor: not-allowed;
+}
+
+/* Estilo cuando das clic en Editar */
+.inputHabilitado {
+  width: 100%;
+  background-color: #1e293b;
+  border: 1px solid #38bdf8;
+  border-radius: 8px;
+  padding: 12px 12px 12px 45px;
+  color: #f1f5f9;
+  font-size: 14px;
+  outline: none;
+  cursor: text;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, #0072ff, #00c6ff);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.btnPrimary:hover {
+  opacity: 0.9;
+}
+
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #e2e8f0;
+  user-select: none;
+}
+
+.checkboxLabel input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.customCheckbox {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 18px;
+  width: 18px;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+}
+
+.checkboxLabel:hover input ~ .customCheckbox {
+  border-color: #0072ff;
+}
+
+.checkboxLabel input:checked ~ .customCheckbox {
+  background: linear-gradient(135deg, #0072ff, #00c6ff);
+  border-color: transparent;
+}
+
+.customCheckbox:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkboxLabel input:checked ~ .customCheckbox:after {
+  display: block;
+}
+
+.checkboxLabel .customCheckbox:after {
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* --- ESTILOS DEL MODAL --- */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modalContent {
+  background-color: #1c2541;
+  border: 1px solid #2a3454;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 450px;
+  padding: 25px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #2a3454;
+  padding-bottom: 15px;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.btnCloseX {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.btnCloseX:hover {
+  color: #ffffff;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Inputs internos del modal son editables por defecto */
+.modalForm .inputWrapper input {
+  width: 100%;
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 12px 12px 12px 45px;
+  color: #f1f5f9;
+  font-size: 14px;
+  outline: none;
+}
+
+.modalForm .inputWrapper input:focus {
+  border-color: #0072ff;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.btnSecondary {
+  background-color: #242f52;
+  color: #ffffff;
+  border: 1px solid #323f6b;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btnSecondary:hover {
+  background-color: #2c3a66;
+}
+
+.notificationContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000; /* Asegura que se sitúe por encima del modal */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Contenedor de cada caja individual de la dirección en el perfil */
+.subInputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Texto guía pequeño encima de cada input en el perfil */
+.inputLabelHint {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.direccionGrid .subInputContainer input {
+  text-align: left !important;
+  padding-left: 12px !important; /* Elimina el espacio fantasma de los íconos del perfil */
+  padding-right: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .direccionGrid .inputLabelHint {
+    text-align: left !important;
+    padding-left: 2px;
+  }
+}

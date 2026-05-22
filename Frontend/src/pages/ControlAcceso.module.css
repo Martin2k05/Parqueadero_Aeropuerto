@@ -1,0 +1,149 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  background-color: #090f24;
+}
+
+.content {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.header p {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.alert {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  padding: 12px;
+  border-radius: 12px;
+  max-width: 896px;
+  font-size: 0.875rem;
+}
+
+.panel {
+  background-color: #111a36;
+  border: 1px solid #1e2d5a;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 896px;
+}
+
+.panel h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.formInline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .formInline {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+}
+
+.inputGroup {
+  flex: 1;
+  width: 100%;
+}
+
+.inputGroup label {
+  display: block;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.inputGroup input, .inputGroup select {
+  width: 100%;
+  background-color: #18254b;
+  border: 1px solid #233568;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.inputGroup input:focus, .inputGroup select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.submitBtn {
+  background-color: #059669;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.2);
+  white-space: nowrap;
+}
+
+.submitBtn:hover {
+  background-color: #10b981;
+}
+
+.listaVehiculos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.itemVehiculo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #18254b;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #233568;
+}
+
+.vehiculoInfo h3 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.vehiculoInfo p {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.salidaBtn {
+  background-color: #dc2626;
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 8px 16px;
+  border-radius: 12px;
+}
+
+.salidaBtn:hover {
+  background-color: #ef4444;
+}
+
+.vacio {
+  font-size: 0.875rem;
+  color: #64748b;
+}

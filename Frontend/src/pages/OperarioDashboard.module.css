@@ -1,0 +1,185 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  background-color: #090f24;
+}
+
+.content {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.header p {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.metricasGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .metricasGrid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.metricaCard {
+  background-color: #111a36;
+  border: 1px solid #1e2d5a;
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.icon {
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+}
+
+.metricaCard h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.metricaCard p {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.metricaSub {
+  font-size: 10px !important;
+  color: #64748b !important;
+  margin-top: 2px;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .chartsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.chartCard {
+  background-color: #111a36;
+  border: 1px solid #1e2d5a;
+  padding: 24px;
+  border-radius: 12px;
+}
+
+.chartCard h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.barChartContainer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 128px;
+  padding-top: 16px;
+  border-b: 1px solid #334155;
+}
+
+.barGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.barBlue {
+  width: 8px;
+  background-color: #3b82f6;
+  border-radius: 4px 4px 0 0;
+}
+
+.barCyan {
+  width: 24px;
+  background-color: #06b6d4;
+  border-radius: 4px 4px 0 0;
+}
+
+.barGroup span {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 8px;
+}
+
+.actividadCard {
+  background-color: #111a36;
+  border: 1px solid #1e2d5a;
+  padding: 24px;
+  border-radius: 12px;
+}
+
+.actividadCard h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.listaActividad {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.itemActividad {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #18254b;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #233568;
+}
+
+.itemInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.itemText p {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.itemText span {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: block;
+  margin-top: 2px;
+}
+
+.statusTag {
+  font-size: 0.75rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 500;
+}
