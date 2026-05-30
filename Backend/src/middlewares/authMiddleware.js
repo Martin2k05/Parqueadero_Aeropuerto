@@ -1,25 +1,32 @@
-const jwt = require('jsonwebtoken');
+const jwt = require('jwt-simple');
 
 const verificarToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const tokenHeader = req.headers['authorization'];
 
-  if (!token) {
-    return res.status(401).json({ message: 'Acceso denegado. Token no proporcionado.' });
+  if (!tokenHeader) {
+    return res.status(403).json({ message: 'Token no proporcionado.' });
   }
 
   try {
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified;
+    // Extraer el token quitando el prefijo "Bearer "
+    const token = tokenHeader.split(' ')[1] || tokenHeader;
+    
+    // Decodificar usando la misma librería jwt-simple y la firma secreta
+    const decoded = jwt.decode(token, 'TU_FIRMA_SECRETA_JWT_AQUÍ');
+    
+    // Inyectamos el usuario decodificado en la petición (req.user)
+    req.user = decoded;
+    
     next();
   } catch (error) {
-    res.status(403).json({ message: 'Token inválido o expirado.' });
+    console.error('Error al validar token con jwt-simple:', error.message);
+    return res.status(401).json({ message: 'Token inválido o expirado.' });
   }
 };
 
 const permitirRoles = (...rolesPermitidos) => {
   return (req, res, next) => {
-    if (!rolesPermitidos.includes(req.user.rol)) {
+    if (!req.user || !rolesPermitidos.includes(req.user.rol)) {
       return res.status(403).json({ message: 'No tienes permisos para acceder a este recurso.' });
     }
     next();

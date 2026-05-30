@@ -42,6 +42,12 @@ const Register = () => {
       return;
     }
 
+    // OPTIMIZACIÓN: Forzar que la placa siempre se guarde en mayúsculas
+    if (name === 'placaVehiculo') {
+      setFormData({ ...formData, [name]: value.toUpperCase() });
+      return;
+    }
+
     // Cambios normales para los demás campos
     setFormData({ ...formData, [name]: value });
   };
@@ -67,7 +73,7 @@ const Register = () => {
       const respuesta = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData) // Envía los campos individuales que el backend espera
+        body: JSON.stringify(formData)
       });
 
       const datos = await respuesta.json();
@@ -122,34 +128,33 @@ const Register = () => {
             <input type="text" name="telefono" value={formData.telefono} onChange={handleChange} placeholder="Ej: 3151234567" required />
           </div>
 
-          {/* Fila 3: Dirección Desglosada (Campos compuestos) */}
-          {/* Fila de Dirección Desglosada con especificación clara */}
-<div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-  <label>Dirección de Residencia</label>
-  <div className={styles.direccionGrid}>
-    <div className={styles.subInputContainer}>
-      <span className={styles.inputLabelHint}>Calle / Av</span>
-      <input type="text" name="calle" value={formData.calle} onChange={handleChange} placeholder="Ej: 12" required />
-    </div>
-    <div className={styles.subInputContainer}>
-      <span className={styles.inputLabelHint}>Carrera</span>
-      <input type="text" name="carrera" value={formData.carrera} onChange={handleChange} placeholder="Ej: 23" required />
-    </div>
-    <div className={styles.subInputContainer}>
-      <span className={styles.inputLabelHint}>Número</span>
-      <input type="text" name="numero" value={formData.numero} onChange={handleChange} placeholder="Ej: 2" required />
-    </div>
-    <div className={styles.subInputContainer}>
-      <span className={styles.inputLabelHint}>Barrio</span>
-      <input type="text" name="barrio" value={formData.barrio} onChange={handleChange} placeholder="Ej: Olímpico" required />
-    </div>
-  </div>
-</div>
+          {/* Fila 3: Dirección Desglosada */}
+          <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+            <label>Dirección de Residencia</label>
+            <div className={styles.direccionGrid}>
+              <div className={styles.subInputContainer}>
+                <span className={styles.inputLabelHint}>Calle / Av</span>
+                <input type="text" name="calle" value={formData.calle} onChange={handleChange} placeholder="Ej: 12" required />
+              </div>
+              <div className={styles.subInputContainer}>
+                <span className={styles.inputLabelHint}>Carrera</span>
+                <input type="text" name="carrera" value={formData.carrera} onChange={handleChange} placeholder="Ej: 23" required />
+              </div>
+              <div className={styles.subInputContainer}>
+                <span className={styles.inputLabelHint}>Número</span>
+                <input type="text" name="numero" value={formData.numero} onChange={handleChange} placeholder="Ej: 2" required />
+              </div>
+              <div className={styles.subInputContainer}>
+                <span className={styles.inputLabelHint}>Barrio</span>
+                <input type="text" name="barrio" value={formData.barrio} onChange={handleChange} placeholder="Ej: Olímpico" required />
+              </div>
+            </div>
+          </div>
 
-          {/* Fila 4 */}
+          {/* Fila 4: Placa Opcional (Se quitó el atributo required para que calce con los ifs del backend) */}
           <div className={styles.inputGroup}>
             <label>Placa del Vehículo</label>
-            <input type="text" name="placaVehiculo" value={formData.placaVehiculo} onChange={handleChange} placeholder="Ej: ABC123" required />
+            <input type="text" name="placaVehiculo" value={formData.placaVehiculo} onChange={handleChange} placeholder="Ej: ABC123" />
           </div>
 
           <div className={styles.spacer}></div>

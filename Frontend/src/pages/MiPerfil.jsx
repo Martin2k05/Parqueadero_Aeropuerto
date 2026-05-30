@@ -125,7 +125,11 @@ const MiPerfil = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ actual: passwordForm.actual, nueva: passwordForm.nueva })
+        // Corrección del mapeo: Enviamos 'password' para que calce con el Backend
+        body: JSON.stringify({ 
+          actual: passwordForm.actual, 
+          password: passwordForm.nueva 
+        })
       });
 
       const datos = await respuesta.json();
@@ -234,61 +238,60 @@ const MiPerfil = () => {
                 </div>
               </div>
 
-              {/* CAMPOS EDITABLES: Dirección Desglosada */}
               {/* CAMPOS EDITABLES: Dirección Desglosada con especificación clara */}
-<div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-  <label>Dirección de Residencia</label>
-  <div className={styles.direccionGrid}>
-    <div className={styles.subInputContainer}>
-      <span className={styles.inputLabelHint}>Calle / Av</span>
-      <input 
-        type="text" 
-        name="dir_calle" 
-        value={perfil.dir_calle} 
-        onChange={handleInputChange} 
-        placeholder="Calle / Av" 
-        readOnly={!editando}
-        className={editando ? styles.inputHabilitado : styles.inputBloqueado}
-      />
-    </div>
-    <div className={styles.subInputContainer}>
-      <span className={styles.inputLabelHint}>Carrera</span>
-      <input 
-        type="text" 
-        name="dir_carrera" 
-        value={perfil.dir_carrera} 
-        onChange={handleInputChange} 
-        placeholder="Carrera" 
-        readOnly={!editando}
-        className={editando ? styles.inputHabilitado : styles.inputBloqueado}
-      />
-    </div>
-    <div className={styles.subInputContainer}>
-      <span className={styles.inputLabelHint}>Número</span>
-      <input 
-        type="text" 
-        name="dir_numero" 
-        value={perfil.dir_numero} 
-        onChange={handleInputChange} 
-        placeholder="Número" 
-        readOnly={!editando}
-        className={editando ? styles.inputHabilitado : styles.inputBloqueado}
-      />
-    </div>
-    <div className={styles.subInputContainer}>
-      <span className={styles.inputLabelHint}>Barrio</span>
-      <input 
-        type="text" 
-        name="dir_barrio" 
-        value={perfil.dir_barrio} 
-        onChange={handleInputChange} 
-        placeholder="Barrio" 
-        readOnly={!editando}
-        className={editando ? styles.inputHabilitado : styles.inputBloqueado}
-      />
-    </div>
-  </div>
-</div>
+              <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                <label>Dirección de Residencia</label>
+                <div className={styles.direccionGrid}>
+                  <div className={styles.subInputContainer}>
+                    <span className={styles.inputLabelHint}>Calle / Av</span>
+                    <input 
+                      type="text" 
+                      name="dir_calle" 
+                      value={perfil.dir_calle} 
+                      onChange={handleInputChange} 
+                      placeholder="Calle / Av" 
+                      readOnly={!editando}
+                      className={editando ? styles.inputHabilitado : styles.inputBloqueado}
+                    />
+                  </div>
+                  <div className={styles.subInputContainer}>
+                    <span className={styles.inputLabelHint}>Carrera</span>
+                    <input 
+                      type="text" 
+                      name="dir_carrera" 
+                      value={perfil.dir_carrera} 
+                      onChange={handleInputChange} 
+                      placeholder="Carrera" 
+                      readOnly={!editando}
+                      className={editando ? styles.inputHabilitado : styles.inputBloqueado}
+                    />
+                  </div>
+                  <div className={styles.subInputContainer}>
+                    <span className={styles.inputLabelHint}>Número</span>
+                    <input 
+                      type="text" 
+                      name="dir_numero" 
+                      value={perfil.dir_numero} 
+                      onChange={handleInputChange} 
+                      placeholder="Número" 
+                      readOnly={!editando}
+                      className={editando ? styles.inputHabilitado : styles.inputBloqueado}
+                    />
+                  </div>
+                  <div className={styles.subInputContainer}>
+                    <span className={styles.inputLabelHint}>Barrio</span>
+                    <input 
+                      type="text" 
+                      name="dir_barrio" 
+                      value={perfil.dir_barrio} 
+                      onChange={handleInputChange} 
+                      placeholder="Barrio" 
+                      readOnly={!editando}
+                      className={editando ? styles.inputHabilitado : styles.inputBloqueado}
+                    />
+                  </div>
+                </div>
+              </div>
 
             </div>
           </section>

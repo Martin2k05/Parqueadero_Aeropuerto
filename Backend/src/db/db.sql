@@ -70,28 +70,28 @@ CREATE TABLE IF NOT EXISTS historial_tarifas (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE RESTRICT
 );
 
--- Tabla de clientes (Entidad: Cliente)
-CREATE TABLE IF NOT EXISTS clientes (
-    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_cliente VARCHAR(150) NOT NULL,
-    -- Dirección desglosada (Atributo compuesto)
-    dir_barrio VARCHAR(50),
-    dir_calle VARCHAR(30),
-    dir_carrera VARCHAR(30),
-    dir_lote VARCHAR(20),
-    dir_numero VARCHAR(20),
-    telefono_numero VARCHAR(20)
-);
-
--- =====================================================================
--- 2. TABLAS DE VEHÍCULOS Y OPERACIÓN EN VIVO
--- =====================================================================
-
 -- Tabla de vehículos (Entidad: Vehiculo)
 CREATE TABLE IF NOT EXISTS vehiculos (
     placa_vehiculo VARCHAR(10) PRIMARY KEY,
     modelo VARCHAR(50),
     marca VARCHAR(50)
+);
+
+-- Tabla de clientes (Entidad: Cliente)
+CREATE TABLE IF NOT EXISTS clientes (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_cliente VARCHAR(150) NOT NULL,
+    identificacion VARCHAR(20) NOT NULL,
+    correo VARCHAR(150) NOT NULL UNIQUE,
+    -- Dirección desglosada (Atributo compuesto)
+    dir_barrio VARCHAR(50),
+    dir_calle VARCHAR(30),
+    dir_carrera VARCHAR(30),
+    dir_numero VARCHAR(20),
+    telefono_numero VARCHAR(20),
+    contrasena VARCHAR(255) NOT NULL,
+    placa_vehiculo VARCHAR(10) NULL,
+    FOREIGN KEY (placa_vehiculo) REFERENCES vehiculos(placa_vehiculo) ON DELETE SET NULL
 );
 
 -- Tabla de mensualidades (Entidad: Mensualidad)
