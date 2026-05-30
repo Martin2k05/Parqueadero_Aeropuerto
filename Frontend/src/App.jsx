@@ -1,5 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ClienteDashboard from './pages/ClienteDashboard';
@@ -7,11 +10,9 @@ import OperarioDashboard from './pages/OperarioDashboard';
 import ControlAcceso from './pages/ControlAcceso';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// Importación de las nuevas páginas reales del cliente
 import MiPlan from './pages/MiPlan';
 import MiPerfil from './pages/MiPerfil';
 
-// Páginas de ejemplo para el Administrador (puedes cambiarlas después por sus archivos reales)
 const Clientes = () => <div style={{ padding: '20px', color: 'white' }}><h2>Gestión de Clientes</h2></div>;
 const Reportes = () => <div style={{ padding: '20px', color: 'white' }}><h2>Reportes y Estadísticas</h2></div>;
 const Tarifas = () => <div style={{ padding: '20px', color: 'white' }}><h2>Configuración de Tarifas</h2></div>;
@@ -19,11 +20,13 @@ const Tarifas = () => <div style={{ padding: '20px', color: 'white' }}><h2>Confi
 function App() {
   return (
     <BrowserRouter>
+      {/* Añade el ToastContainer aquí */}
+      <ToastContainer position="top-right" theme="dark" autoClose={3000} />
+      
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* Rutas de Clientes */}
         <Route path="/dashboard-cliente" element={
           <ProtectedRoute rolesPermitidos={['Cliente']}>
             <ClienteDashboard />
@@ -40,7 +43,6 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* Rutas de Operarios y Administradores */}
         <Route path="/dashboard-monitoreo" element={
           <ProtectedRoute rolesPermitidos={['Operario', 'Admin']}>
             <OperarioDashboard />
@@ -53,7 +55,6 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* Rutas exclusivas de Administradores */}
         <Route path="/clientes" element={
           <ProtectedRoute rolesPermitidos={['Admin']}>
             <Clientes />

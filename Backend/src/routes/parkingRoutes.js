@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const parkingController = require('../controllers/parkingController');
-const { verificarToken, permitirRoles } = require('../middlewares/authMiddleware');
+const { verificarToken } = require('../middlewares/authMiddleware');
 
-router.post('/ingreso', verificarToken, permitirRoles('Admin', 'Operario'), parkingController.registrarIngreso);
-router.post('/salida', verificarToken, permitirRoles('Admin', 'Operario'), parkingController.registrarSalida);
-router.get('/vehiculos-activos', verificarToken, permitirRoles('Admin', 'Operario'), parkingController.listarVehiculosDentro);
+console.log("Debug Controller:", parkingController);
+
+router.post('/ingreso', verificarToken, parkingController.registrarIngreso);
+router.post('/salida', verificarToken, parkingController.registrarSalida);
+router.get('/activos', verificarToken, parkingController.listarVehiculosDentro);
 
 module.exports = router;
