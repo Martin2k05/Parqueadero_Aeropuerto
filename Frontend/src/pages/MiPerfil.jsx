@@ -26,7 +26,8 @@ const MiPerfil = () => {
     const cargarDatosPerfil = async () => {
       try {
         const token = localStorage.getItem('token');
-        const respuesta = await fetch('http://localhost:5000/api/auth/perfil-cliente', {
+        // CORREGIDO: Apunta a /api/dashboard/perfil-cliente según la ruta mapeada en el backend
+        const respuesta = await fetch('http://localhost:5000/api/dashboard/perfil-cliente', {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -34,7 +35,7 @@ const MiPerfil = () => {
 
         if (respuesta.ok) {
           setPerfil({
-            nombre_cliente: datos.nombre_cliente || '',
+            nombre_cliente: datos.nombre || datos.nombre_cliente || '',
             identificacion: datos.identificacion || '',
             correo: datos.correo || '',
             telefono: datos.telefono || '',
@@ -42,7 +43,7 @@ const MiPerfil = () => {
             dir_carrera: datos.dir_carrera || '',
             dir_numero: datos.dir_numero || '',
             dir_barrio: datos.dir_barrio || '',
-            placa_vehiculo: datos.placa_vehiculo || 'Sin Placa'
+            placa_vehiculo: datos.placa || datos.placa_vehiculo || 'Sin Placa'
           });
         } else {
           toast.error('Error de perfil', { description: datos.message || 'Error al cargar perfil.' });

@@ -17,13 +17,14 @@ const MiPlan = () => {
   const verificarPlan = async () => {
     try {
       const token = localStorage.getItem('token');
-      const respuesta = await fetch('http://localhost:5000/api/auth/mi-plan-estado', {
+      // CORREGIDO: Apunta a la ruta real del dashboard del cliente para validar el plan
+      const respuesta = await fetch('http://localhost:5000/api/dashboard/cliente', {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const datos = await respuesta.json();
 
-      if (respuesta.ok && datos.tienePlan) {
+      if (respuesta.ok && datos.planActual && datos.planActual !== 'NINGUNO') {
         setPlanActivo(true);
         setDatosPlan(datos);
       } else {
@@ -33,7 +34,7 @@ const MiPlan = () => {
       console.error(error);
       mostrarNotificacion('Error al conectar con el servidor.', 'error');
     } finally {
-      setLoading(false);
+      loading && setLoading(false);
     }
   };
 
@@ -54,7 +55,8 @@ const MiPlan = () => {
     setCargandoPago(true);
     try {
       const token = localStorage.getItem('token');
-      const respuesta = await fetch('http://localhost:5000/api/auth/comprar-plan-mensual', {
+      // CORREGIDO: Redirige la creación del checkout a las rutas de pagos integradas
+      const respuesta = await fetch('http://localhost:5000/api/payments/comprar-plan-mensual', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,8 +84,9 @@ const MiPlan = () => {
   };
 
   const formatearFecha = (fechaString) => {
-    if (!fechaString) return '';
+    if (!fechaString || fechaString === 'N/A') return 'N/A';
     const fecha = new Date(fechaString);
+    if(isNaN(fecha)) return fechaString;
     return `${fecha.getDate()}/${fecha.getMonth() + 1}/${fecha.getFullYear()}`;
   };
 
@@ -108,10 +111,10 @@ const MiPlan = () => {
           <div className={styles.planCard}>
             <div className={styles.planHeader}>
               <div className={styles.planTitleContainer}>
-                <div className={styles.iconContainer}>膜</div>
+                <div className={styles.iconContainer}>★</div>
                 <div>
                   <h2>Plan Premium</h2>
-                  <p className={styles.statusActive}>Estado: Activo</p>
+                  <p className={styles.statusActive}>Estado: Activo ({datosPlan?.diasRestantes} días restantes)</p>
                 </div>
               </div>
               <span className={styles.badgeActive}>Activo</span>
@@ -119,21 +122,21 @@ const MiPlan = () => {
 
             <div className={styles.planGrid}>
               <div className={styles.infoBox}>
-                <span className={styles.infoLabel}>Fecha de Inicio</span>
-                <span className={styles.infoValue}>{formatearFecha(datosPlan?.fecha_inicio)}</span>
+                <span className={styles.infoLabel}>Vehículo Asignado</span>
+                <span className={styles.infoValue}>{datosPlan?.placaVehiculo || 'Sin Placa'}</span>
               </div>
               <div className={styles.infoBox}>
-                <span className={styles.infoLabel}>Fecha de Vencimiento</span>
-                <span className={styles.infoValue}>{formatearFecha(datosPlan?.fecha_final)}</span>
+                <span className={styles.infoLabel}>Vence el</span>
+                <span className={styles.infoValue}>{formatearFecha(datosPlan?.validoHasta)}</span>
               </div>
               <div className={styles.infoBox}>
-                <span className={styles.infoLabel}>Valor Pagado</span>
-                <span className={styles.infoValue}>$180.000</span>
+                <span className={styles.infoLabel}>Valor Mensualidad</span>
+                <span className={styles.infoValue}>$180.000 COP</span>
               </div>
             </div>
           </div>
         ) : (
-          /* VISTA DIRECTA DE COMPRA REAL: REORGANIZADA CON LAS CLASES CORRECTAS DE TU CSS */
+          /* VISTA DIRECTA DE COMPRA REAL */
           <div className={styles.planCard}>
             <div className={styles.planHeader}>
               <div className={styles.planTitleContainer}>

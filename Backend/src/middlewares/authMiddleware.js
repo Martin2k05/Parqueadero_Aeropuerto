@@ -1,6 +1,7 @@
-const jwt = require('jwt-simple');
+const jwt = require('jsonwebtoken');
 
 const verificarToken = (req, res, next) => {
+  // Capturar el header Authorization
   const tokenHeader = req.headers['authorization'];
 
   if (!tokenHeader) {
@@ -11,15 +12,15 @@ const verificarToken = (req, res, next) => {
     // Extraer el token quitando el prefijo "Bearer "
     const token = tokenHeader.split(' ')[1] || tokenHeader;
     
-    // Decodificar usando la misma librería jwt-simple y la firma secreta
-    const decoded = jwt.decode(token, 'TU_FIRMA_SECRETA_JWT_AQUÍ');
+    // CORREGIDO: Usamos la librería estándar jsonwebtoken y leemos la clave real del .env
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Inyectamos el usuario decodificado en la petición (req.user)
     req.user = decoded;
     
     next();
   } catch (error) {
-    console.error('Error al validar token con jwt-simple:', error.message);
+    console.error('Error al validar token en authMiddleware:', error.message);
     return res.status(401).json({ message: 'Token inválido o expirado.' });
   }
 };

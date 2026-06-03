@@ -43,7 +43,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Contraseña incorrecta.' });
     }
 
-    // Generar Token JWT
+    // Generar Token JWT usando estrictamente la clave del .env
     const token = jwt.sign(
       { id: idRef, correo: usuarioEncontrado.correo, rol: rolUsuario },
       process.env.JWT_SECRET,
@@ -79,7 +79,7 @@ exports.registerCliente = async (req, res) => {
     carrera, 
     numero, 
     barrio, 
-    placaVehiculo, 
+    placa_vehiculo, 
     contrasena 
   } = req.body;
 
@@ -98,8 +98,8 @@ exports.registerCliente = async (req, res) => {
     const hashContrasena = await bcrypt.hash(contrasena, salt);
 
     // 3. Insertar el vehículo si no existe en la base de datos global
-    if (placaVehiculo) {
-      const placaFormateada = placaVehiculo.trim().substring(0, 10);
+    if (placa_vehiculo) {
+      const placaFormateada = placa_vehiculo.trim().toUpperCase().substring(0, 10);
       await db.query('INSERT IGNORE INTO vehiculos (placa_vehiculo) VALUES (?)', [placaFormateada]);
     }
 
@@ -121,17 +121,6 @@ exports.registerCliente = async (req, res) => {
 
     const nuevoIdCliente = resultado.insertId;
 
-    // 5. Vincular la placa al cliente en mensualidades desde el registro
-    if (placaVehiculo) {
-      const placaFormateada = placaVehiculo.trim().substring(0, 10);
-      await db.query(
-        `INSERT INTO mensualidades (id_cliente, placa_vehiculo, id_usuario, fecha_inicio, fecha_final) 
-         VALUES (?, ?, 1, NOW(), NOW())`,
-        [nuevoIdCliente, placaFormateada]
-      );
-    }
-
-    // Respuesta exitosa
     res.status(201).json({ message: 'Registro exitoso.', id: nuevoIdCliente });
 
   } catch (error) {
@@ -148,17 +137,7 @@ exports.obtenerPerfil = async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      `SELECT 
-        id_cliente,
-        nombre_cliente,
-        correo,
-        telefono,
-        identificacion,
-        dir_barrio,
-        dir_calle,
-        dir_carrera,
-        dir_numero
-       FROM clientes WHERE id_cliente = ?`,
+      `SELECT id_cliente, nombre_cliente, correo, telefono, identificacion, dir_barrio, dir_calle, dir_carrera, dir_numero FROM clientes WHERE id_cliente = ?`,
       [idCliente]
     );
 
@@ -168,17 +147,14 @@ exports.obtenerPerfil = async (req, res) => {
 
     const infoCliente = rows[0];
 
-    // Buscar la última placa amarrada a sus mensualidades
+    // Buscar la última placa amarrada a sus mensualidades compradas
     const [vehiculoRows] = await db.query(
-      `SELECT placa_vehiculo FROM mensualidades 
-       WHERE id_cliente = ? 
-       ORDER BY id_mensualidad DESC LIMIT 1`, 
+      `SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1`, 
       [idCliente]
     );
 
-    // Si no tiene mensualidad activa ni placa registrada, muestra "Sin Placa"
     infoCliente.placa_vehiculo = vehiculoRows.length > 0 ? vehiculoRows[0].placa_vehiculo : "Sin Placa";
-
+    
     return res.json(infoCliente);
 
   } catch (error) {
@@ -199,21 +175,11 @@ exports.actualizarPerfil = async (req, res) => {
   }
 
   try {
-    // Actualiza única y exclusivamente la información de contacto y residencia
     await db.query(
-      `UPDATE clientes SET 
-        correo = ?, 
-        telefono = ?, 
-        dir_barrio = ?, 
-        dir_calle = ?, 
-        dir_carrera = ?, 
-        dir_numero = ? 
-       WHERE id_cliente = ?`,
+      `UPDATE clientes SET correo = ?, telefono = ?, dir_barrio = ?, dir_calle = ?, dir_carrera = ?, dir_numero = ? WHERE id_cliente = ?`,
       [correo, telefono, dir_barrio, dir_calle, dir_carrera, dir_numero, idCliente]
     );
-
     return res.json({ message: 'Información de contacto actualizada con éxito.' });
-
   } catch (error) {
     console.error('Error al actualizar perfil de cliente:', error);
     return res.status(500).json({ message: 'Error interno en el servidor al guardar cambios.' });
@@ -241,23 +207,16 @@ exports.cambiarContrasena = async (req, res) => {
     }
 
     const [rows] = await db.query(queryBuscar, [idUsuario]);
-    
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado en el sistema.' });
-    }
+    if (rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado.' });
 
     const contrasenaBD = rows[0].contrasena;
-
     const passwordCorrect = await bcrypt.compare(actual, contrasenaBD);
-    if (!passwordCorrect) {
-      return res.status(401).json({ message: 'La contraseña actual es incorrecta.' });
-    }
+    if (!passwordCorrect) return res.status(401).json({ message: 'La contraseña actual es incorrecta.' });
 
     const salt = await bcrypt.genSalt(10);
     const hashNueva = await bcrypt.hash(nueva, salt);
 
     await db.query(queryActualizar, [hashNueva, idUsuario]);
-
     res.json({ message: '¡Contraseña modificada correctamente!' });
 
   } catch (error) {

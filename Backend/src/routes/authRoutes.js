@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); 
 const bcrypt = require('bcryptjs'); 
-const jwt = require('jwt-simple');
+// 🔑 CAMBIO 1: Usamos jsonwebtoken para que coincida perfectamente con tu authMiddleware
+const jwt = require('jsonwebtoken'); 
 
 const authMiddlewareObj = require('../middlewares/authMiddleware');
 const verifToken = authMiddlewareObj.verificarToken;
@@ -41,7 +42,8 @@ const loginManejador = async (req, res) => {
       rol: rolUsuario 
     };
     
-    const token = jwt.encode(payload, 'TU_FIRMA_SECRETA_JWT_AQUÍ');
+    // 🔑 CAMBIO 2: Firmamos usando jwt.sign() conectado a tus variables de entorno (.env)
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
 
     return res.json({
       message: 'Ingreso exitoso',
@@ -191,6 +193,9 @@ router.get('/api/auth/perfil-cliente', verifToken, obtenerPerfilManejador);
 router.get('/perfil', verifToken, obtenerPerfilManejador);
 router.get('/auth/perfil', verifToken, obtenerPerfilManejador);
 router.get('/api/auth/perfil', verifToken, obtenerPerfilManejador);
+
+// 🛠️ ADICIÓN ROUTE: Captura las peticiones que hace tu front en la vista de perfil para evitar el 401/404
+router.get('/api/dashboard/perfil-cliente', verifToken, obtenerPerfilManejador);
 
 // ==========================================
 // CONTROLADOR INTEGRADO DE ACTUALIZACIÓN (PUT)
@@ -376,6 +381,9 @@ const dashboardManejador = async (req, res) => {
 router.get('/dashboard-estado', verifToken, dashboardManejador);
 router.get('/auth/dashboard-estado', verifToken, dashboardManejador);
 router.get('/api/auth/dashboard-estado', verifToken, dashboardManejador);
+
+// 🛠️ ADICIÓN ROUTE: Resuelve el error 404 de tu Dashboard apuntando al manejador correcto
+router.get('/api/dashboard/cliente', verifToken, dashboardManejador);
 
 // ==========================================
 // CONTROLADOR INTEGRADO DE MI PLAN
