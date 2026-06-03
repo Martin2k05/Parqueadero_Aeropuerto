@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
-import Notification from '../components/Notification';
+import { toast } from 'sonner';
+import { User, Mail, Phone, Hash, Car, Lock, Key, RefreshCw, X, Shield } from 'lucide-react';
 import styles from './MiPerfil.module.css';
 
 const MiPerfil = () => {
   const [editando, setEditando] = useState(false);
   
-  // Estado con la información real de la BD
   const [perfil, setPerfil] = useState({
     nombre_cliente: '',
     identificacion: '',
@@ -21,13 +21,7 @@ const MiPerfil = () => {
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ actual: '', nueva: '', confirmar: '' });
-  const [alerta, setAlerta] = useState(null);
 
-  const mostrarNotificacion = (mensaje, tipo) => {
-    setAlerta({ mensaje, tipo });
-  };
-
-  // Cargar datos reales al montar el componente
   useEffect(() => {
     const cargarDatosPerfil = async () => {
       try {
@@ -51,18 +45,17 @@ const MiPerfil = () => {
             placa_vehiculo: datos.placa_vehiculo || 'Sin Placa'
           });
         } else {
-          mostrarNotificacion(datos.message || 'Error al cargar perfil.', 'error');
+          toast.error('Error de perfil', { description: datos.message || 'Error al cargar perfil.' });
         }
       } catch (error) {
         console.error(error);
-        mostrarNotificacion('Error de conexión con el servidor.', 'error');
+        toast.error('Error de servidor', { description: 'Error de conexión con el servidor.' });
       }
     };
 
     cargarDatosPerfil();
   }, []);
 
-  // Guardar cambios en el Backend (Solo correo, teléfono y dirección)
   const guardarCambiosPerfil = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -85,21 +78,19 @@ const MiPerfil = () => {
       const datos = await respuesta.json();
 
       if (respuesta.ok) {
-        mostrarNotificacion('Información de perfil actualizada con éxito.', 'success');
+        toast.success('¡Perfil actualizado!', { description: 'Información de perfil actualizada con éxito.' });
         setEditando(false);
       } else {
-        mostrarNotificacion(datos.message || 'Error al actualizar.', 'error');
+        toast.error('Error al guardar', { description: datos.message || 'Error al actualizar.' });
       }
     } catch (error) {
       console.error(error);
-      mostrarNotificacion('No se pudo conectar con el servidor.', 'error');
+      toast.error('Error de red', { description: 'No se pudo conectar con el servidor.' });
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
-    // Validación en tiempo real para el teléfono celular en caso de que lo edite
     if (name === 'telefono') {
       const soloNumeros = value.replace(/\D/g, '');
       if (soloNumeros.length <= 10) {
@@ -113,7 +104,7 @@ const MiPerfil = () => {
   const guardarContrasena = async (e) => {
     e.preventDefault();
     if (passwordForm.nueva !== passwordForm.confirmar) {
-      mostrarNotificacion('La nueva contraseña y la confirmación no coinciden.', 'error');
+      toast.error('Error de validación', { description: 'La nueva contraseña y la confirmación no coinciden.' });
       return;
     }
 
@@ -125,34 +116,26 @@ const MiPerfil = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        // Corrección del mapeo: Enviamos 'password' para que calce con el Backend
-        body: JSON.stringify({ 
-          actual: passwordForm.actual, 
-          password: passwordForm.nueva 
-        })
+        body: JSON.stringify({ actual: passwordForm.actual, nueva: passwordForm.nueva })
       });
 
       const datos = await respuesta.json();
 
       if (respuesta.ok) {
-        mostrarNotificacion(datos.message || '¡Contraseña modificada correctamente!', 'success');
+        toast.success('Contraseña modificada', { description: datos.message || '¡Contraseña modificada correctamente!' });
         setModalAbierto(false);
         setPasswordForm({ actual: '', nueva: '', confirmar: '' });
       } else {
-        mostrarNotificacion(datos.message || 'Hubo un error al actualizar.', 'error');
+        toast.error('Error de seguridad', { description: datos.message || 'Hubo un error al actualizar.' });
       }
     } catch (error) {
-      mostrarNotificacion('No se pudo conectar con el servidor.', 'error');
+      toast.error('Error de red', { description: 'No se pudo conectar con el servidor.' });
     }
   };
 
   return (
     <div className={styles.container}>
       <Sidebar />
-      
-      <div className={styles.notificationContainer}>
-        {alerta && <Notification mensaje={alerta.mensaje} tipo={alerta.tipo} onClose={() => setAlerta(null)} />}
-      </div>
 
       <main className={styles.mainContent}>
         <header className={styles.header}>
@@ -161,7 +144,7 @@ const MiPerfil = () => {
             <p>Gestiona tu información personal en tiempo real</p>
           </div>
           <button 
-            className={styles.btnEdit} 
+            className={editando ? styles.btnSave : styles.btnEdit} 
             onClick={() => {
               if (editando) {
                 guardarCambiosPerfil();
@@ -179,20 +162,18 @@ const MiPerfil = () => {
             <h3>Información Personal</h3>
             <div className={styles.gridForm}>
               
-              {/* CAMPO PROTEGIDO */}
               <div className={styles.inputGroup}>
                 <label>Nombre Completo</label>
                 <div className={styles.inputWrapper}>
-                  <span className={styles.inputIcon}>👤</span>
+                  <User size={18} className={styles.inputIcon} />
                   <input type="text" value={perfil.nombre_cliente} readOnly className={styles.inputBloqueado} />
                 </div>
               </div>
 
-              {/* CAMPO EDITABLE */}
               <div className={styles.inputGroup}>
                 <label>Correo Electrónico</label>
                 <div className={styles.inputWrapper}>
-                  <span className={styles.inputIcon}>✉️</span>
+                  <Mail size={18} className={styles.inputIcon} />
                   <input 
                     type="email" 
                     name="correo"
@@ -204,11 +185,10 @@ const MiPerfil = () => {
                 </div>
               </div>
 
-              {/* CAMPO EDITABLE */}
               <div className={styles.inputGroup}>
                 <label>Teléfono Celular</label>
                 <div className={styles.inputWrapper}>
-                  <span className={styles.inputIcon}>📞</span>
+                  <Phone size={18} className={styles.inputIcon} />
                   <input 
                     type="text" 
                     name="telefono"
@@ -220,25 +200,22 @@ const MiPerfil = () => {
                 </div>
               </div>
 
-              {/* CAMPO PROTEGIDO */}
               <div className={styles.inputGroup}>
                 <label>Identificación</label>
                 <div className={styles.inputWrapper}>
-                  <span className={styles.inputIcon}>#</span>
+                  <Hash size={18} className={styles.inputIcon} />
                   <input type="text" value={perfil.identificacion} readOnly className={styles.inputBloqueado} />
                 </div>
               </div>
 
-              {/* CAMPO PROTEGIDO */}
               <div className={styles.inputGroup}>
                 <label>Placa del Vehículo</label>
                 <div className={styles.inputWrapper}>
-                  <span className={styles.inputIcon}>🚗</span>
+                  <Car size={18} className={styles.inputIcon} />
                   <input type="text" value={perfil.placa_vehiculo} readOnly className={styles.inputBloqueado} />
                 </div>
               </div>
 
-              {/* CAMPOS EDITABLES: Dirección Desglosada con especificación clara */}
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                 <label>Dirección de Residencia</label>
                 <div className={styles.direccionGrid}>
@@ -297,7 +274,10 @@ const MiPerfil = () => {
           </section>
 
           <section className={styles.card}>
-            <h3>Seguridad</h3>
+            <div className={styles.securityHeader}>
+              <Shield size={20} className={styles.securityIcon} />
+              <h3>Seguridad de la Cuenta</h3>
+            </div>
             <button className={styles.btnPrimary} onClick={() => setModalAbierto(true)}>
               Cambiar Contraseña
             </button>
@@ -310,12 +290,32 @@ const MiPerfil = () => {
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
               <h3>Modificar Contraseña</h3>
-              <button className={styles.btnCloseX} onClick={() => setModalAbierto(false)}>×</button>
+              <button className={styles.btnCloseX} onClick={() => setModalAbierto(false)}>
+                <X size={20} />
+              </button>
             </div>
             <form onSubmit={guardarContrasena} className={styles.modalForm}>
-              <div className={styles.inputGroup}><label>Contraseña Actual</label><div className={styles.inputWrapper}><span className={styles.inputIcon}>🔒</span><input type="password" name="actual" value={passwordForm.actual} onChange={(e) => setPasswordForm({...passwordForm, actual: e.target.value})} required /></div></div>
-              <div className={styles.inputGroup}><label>Nueva Contraseña</label><div className={styles.inputWrapper}><span className={styles.inputIcon}>🔑</span><input type="password" name="nueva" value={passwordForm.nueva} onChange={(e) => setPasswordForm({...passwordForm, nueva: e.target.value})} required /></div></div>
-              <div className={styles.inputGroup}><label>Confirmar Nueva Contraseña</label><div className={styles.inputWrapper}><span className={styles.inputIcon}>🔄</span><input type="password" name="confirmar" value={passwordForm.confirmar} onChange={(e) => setPasswordForm({...passwordForm, confirmar: e.target.value})} required /></div></div>
+              <div className={styles.inputGroup}>
+                <label>Contraseña Actual</label>
+                <div className={styles.inputWrapper}>
+                  <Lock size={18} className={styles.inputIcon} />
+                  <input type="password" name="actual" value={passwordForm.actual} onChange={(e) => setPasswordForm({...passwordForm, actual: e.target.value})} required />
+                </div>
+              </div>
+              <div className={styles.inputGroup}>
+                <label>Nueva Contraseña</label>
+                <div className={styles.inputWrapper}>
+                  <Key size={18} className={styles.inputIcon} />
+                  <input type="password" name="nueva" value={passwordForm.nueva} onChange={(e) => setPasswordForm({...passwordForm, nueva: e.target.value})} required />
+                </div>
+              </div>
+              <div className={styles.inputGroup}>
+                <label>Confirmar Nueva Contraseña</label>
+                <div className={styles.inputWrapper}>
+                  <RefreshCw size={18} className={styles.inputIcon} />
+                  <input type="password" name="confirmar" value={passwordForm.confirmar} onChange={(e) => setPasswordForm({...passwordForm, confirmar: e.target.value})} required />
+                </div>
+              </div>
               <div className={styles.modalActions}>
                 <button type="button" className={styles.btnSecondary} onClick={() => setModalAbierto(false)}>Cancelar</button>
                 <button type="submit" className={styles.btnPrimary}>Actualizar Contraseña</button>

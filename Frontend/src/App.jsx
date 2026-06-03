@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ClienteDashboard from './pages/ClienteDashboard';
@@ -11,7 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import MiPlan from './pages/MiPlan';
 import MiPerfil from './pages/MiPerfil';
 
-// Páginas de ejemplo para el Administrador (puedes cambiarlas después por sus archivos reales)
+// Páginas de ejemplo para el Administrador
 const Clientes = () => <div style={{ padding: '20px', color: 'white' }}><h2>Gestión de Clientes</h2></div>;
 const Reportes = () => <div style={{ padding: '20px', color: 'white' }}><h2>Reportes y Estadísticas</h2></div>;
 const Tarifas = () => <div style={{ padding: '20px', color: 'white' }}><h2>Configuración de Tarifas</h2></div>;
@@ -19,6 +20,9 @@ const Tarifas = () => <div style={{ padding: '20px', color: 'white' }}><h2>Confi
 function App() {
   return (
     <BrowserRouter>
+      {/* Contenedor global de notificaciones modernas */}
+      <Toaster position="top-right" richColors theme="dark" closeButton />
+      
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

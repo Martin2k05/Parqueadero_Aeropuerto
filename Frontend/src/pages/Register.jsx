@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Plane, User, Hash, Mail, Phone, Car, Lock, ArrowLeft } from 'lucide-react';
 import styles from './Register.module.css';
 
 const Register = () => {
@@ -18,14 +20,10 @@ const Register = () => {
     confirmarContrasena: ''
   });
 
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // VALIDACIÓN EN TIEMPO REAL: Identificación solo números y máximo 10 dígitos
-    if (name === 'identificacion') {
+    if (name === 'identificacion' || name === 'telefono') {
       const soloNumeros = value.replace(/\D/g, ''); 
       if (soloNumeros.length <= 10) {
         setFormData({ ...formData, [name]: soloNumeros });
@@ -33,39 +31,19 @@ const Register = () => {
       return;
     }
 
-    // VALIDACIÓN EN TIEMPO REAL: Teléfono solo números y máximo 10 dígitos
-    if (name === 'telefono') {
-      const soloNumeros = value.replace(/\D/g, '');
-      if (soloNumeros.length <= 10) {
-        setFormData({ ...formData, [name]: soloNumeros });
-      }
-      return;
-    }
-
-    // OPTIMIZACIÓN: Forzar que la placa siempre se guarde en mayúsculas
-    if (name === 'placaVehiculo') {
-      setFormData({ ...formData, [name]: value.toUpperCase() });
-      return;
-    }
-
-    // Cambios normales para los demás campos
     setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
-    // Validar contraseñas idénticas en el cliente
     if (formData.contrasena !== formData.confirmarContrasena) {
-      setError('Las contraseñas no coinciden.');
+      toast.error('Error de validación', { description: 'Las contraseñas no coinciden.' });
       return;
     }
 
-    // Validar longitud mínima de identificación
     if (formData.identificacion.length < 5) {
-      setError('La identificación debe tener al menos 5 dígitos.');
+      toast.error('Error de validación', { description: 'La identificación debe tener al menos 5 dígitos.' });
       return;
     }
 
@@ -79,16 +57,16 @@ const Register = () => {
       const datos = await respuesta.json();
 
       if (respuesta.ok) {
-        setSuccess(datos.message || 'Registro exitoso.');
+        toast.success('¡Registro exitoso!', { description: datos.message || 'Cuenta creada correctamente.' });
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       } else {
-        setError(datos.message || 'Error al registrar la cuenta.');
+        toast.error('Error en registro', { description: datos.message || 'Error al registrar la cuenta.' });
       }
     } catch (err) {
       console.error(err);
-      setError('No se pudo conectar con el servidor.');
+      toast.error('Error de red', { description: 'No se pudo conectar con el servidor.' });
     }
   };
 
@@ -96,39 +74,45 @@ const Register = () => {
     <div className={styles.registerContainer}>
       <div className={styles.registerCard}>
         <div className={styles.logoIcon}>
-          <span>▲</span>
+          <Plane size={24} color="white" className={styles.lucideIcon} />
         </div>
         <h2>Registro de Cliente</h2>
         <p className={styles.subtitle}>Activa tu plan mensual de parqueadero</p>
 
-        {error && <div className={styles.errorMessage}>{error}</div>}
-        {success && <div className={styles.successMessage}>{success}</div>}
-
         <form onSubmit={handleSubmit} className={styles.formGrid}>
           
-          {/* Fila 1 */}
           <div className={styles.inputGroup}>
             <label>Nombre Completo</label>
-            <input type="text" name="nombreCompleto" value={formData.nombreCompleto} onChange={handleChange} required />
+            <div className={styles.inputWrapper}>
+              <User size={16} className={styles.fieldIcon} />
+              <input type="text" name="nombreCompleto" value={formData.nombreCompleto} onChange={handleChange} required />
+            </div>
           </div>
 
           <div className={styles.inputGroup}>
             <label>Identificación (Máx 10 dígitos)</label>
-            <input type="text" name="identificacion" value={formData.identificacion} onChange={handleChange} placeholder="Ej: 12345678" required />
+            <div className={styles.inputWrapper}>
+              <Hash size={16} className={styles.fieldIcon} />
+              <input type="text" name="identificacion" value={formData.identificacion} onChange={handleChange} placeholder="Ej: 12345678" required />
+            </div>
           </div>
 
-          {/* Fila 2 */}
           <div className={styles.inputGroup}>
             <label>Correo Electrónico</label>
-            <input type="email" name="correo" value={formData.correo} onChange={handleChange} placeholder="correo@ejemplo.com" required />
+            <div className={styles.inputWrapper}>
+              <Mail size={16} className={styles.fieldIcon} />
+              <input type="email" name="correo" value={formData.correo} onChange={handleChange} placeholder="correo@ejemplo.com" required />
+            </div>
           </div>
 
           <div className={styles.inputGroup}>
             <label>Teléfono Celular</label>
-            <input type="text" name="telefono" value={formData.telefono} onChange={handleChange} placeholder="Ej: 3151234567" required />
+            <div className={styles.inputWrapper}>
+              <Phone size={16} className={styles.fieldIcon} />
+              <input type="text" name="telefono" value={formData.telefono} onChange={handleChange} placeholder="Ej: 3151234567" required />
+            </div>
           </div>
 
-          {/* Fila 3: Dirección Desglosada */}
           <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
             <label>Dirección de Residencia</label>
             <div className={styles.direccionGrid}>
@@ -151,28 +135,35 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Fila 4: Placa Opcional (Se quitó el atributo required para que calce con los ifs del backend) */}
           <div className={styles.inputGroup}>
             <label>Placa del Vehículo</label>
-            <input type="text" name="placaVehiculo" value={formData.placaVehiculo} onChange={handleChange} placeholder="Ej: ABC123" />
+            <div className={styles.inputWrapper}>
+              <Car size={16} className={styles.fieldIcon} />
+              <input type="text" name="placaVehiculo" value={formData.placaVehiculo} onChange={handleChange} placeholder="Ej: ABC123" required />
+            </div>
           </div>
 
           <div className={styles.spacer}></div>
 
-          {/* Fila 5 */}
           <div className={styles.inputGroup}>
             <label>Contraseña</label>
-            <input type="password" name="contrasena" value={formData.contrasena} onChange={handleChange} placeholder="••••••••" required />
+            <div className={styles.inputWrapper}>
+              <Lock size={16} className={styles.fieldIcon} />
+              <input type="password" name="contrasena" value={formData.contrasena} onChange={handleChange} placeholder="••••••••" required />
+            </div>
           </div>
 
           <div className={styles.inputGroup}>
             <label>Confirmar Contraseña</label>
-            <input type="password" name="confirmarContrasena" value={formData.confirmarContrasena} onChange={handleChange} placeholder="••••••••" required />
+            <div className={styles.inputWrapper}>
+              <Lock size={16} className={styles.fieldIcon} />
+              <input type="password" name="confirmarContrasena" value={formData.confirmarContrasena} onChange={handleChange} placeholder="••••••••" required />
+            </div>
           </div>
 
-          {/* Acciones */}
           <div className={`${styles.formActions} ${styles.fullWidth}`}>
             <button type="button" className={styles.btnVolver} onClick={() => navigate('/login')}>
+              <ArrowLeft size={16} style={{ marginRight: '8px' }} />
               Volver
             </button>
             <button type="submit" className={styles.btnRegistrar}>

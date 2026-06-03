@@ -40,7 +40,6 @@ const MiPlan = () => {
   useEffect(() => {
     verificarPlan();
 
-    // Capturar la respuesta real cuando el cliente regresa de la pasarela de PSE
     const queryParams = new URLSearchParams(window.location.search);
     const status = queryParams.get('payment');
 
@@ -51,7 +50,6 @@ const MiPlan = () => {
     }
   }, []);
 
-  // FLUJO REAL DE CONEXIÓN Y REDIRECCIÓN A PSE
   const iniciarPagoRealPSE = async () => {
     setCargandoPago(true);
     try {
@@ -69,7 +67,6 @@ const MiPlan = () => {
       if (respuesta.ok && datos.urlPago) {
         mostrarNotificacion('Conexión exitosa. Redirigiendo a la plataforma oficial de PSE...', 'success');
         
-        // Espera un segundo para que alcances a ver la notificación verde y redirige
         setTimeout(() => {
           window.location.href = datos.urlPago;
         }, 1000);
@@ -107,18 +104,20 @@ const MiPlan = () => {
         {loading ? (
           <div className={styles.loading}>Verificando credenciales del sistema...</div>
         ) : planActivo ? (
-          /* VISTA CUANDO EL CLIENTE TIENE EL PLAN ACTIVADO */
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div className={styles.planBadgeIcon}>膜</div>
-              <div>
-                <h3>Plan Premium</h3>
-                <p className={styles.statusActivo}>Estado: Activo</p>
+          /* VISTA CUANDO EL CLIENTE SÍ TIENE EL PLAN ACTIVADO */
+          <div className={styles.planCard}>
+            <div className={styles.planHeader}>
+              <div className={styles.planTitleContainer}>
+                <div className={styles.iconContainer}>膜</div>
+                <div>
+                  <h2>Plan Premium</h2>
+                  <p className={styles.statusActive}>Estado: Activo</p>
+                </div>
               </div>
-              <span className={styles.badgeStatus}>Activo</span>
+              <span className={styles.badgeActive}>Activo</span>
             </div>
 
-            <div className={styles.gridInfo}>
+            <div className={styles.planGrid}>
               <div className={styles.infoBox}>
                 <span className={styles.infoLabel}>Fecha de Inicio</span>
                 <span className={styles.infoValue}>{formatearFecha(datosPlan?.fecha_inicio)}</span>
@@ -134,21 +133,30 @@ const MiPlan = () => {
             </div>
           </div>
         ) : (
-          /* VISTA DIRECTA DE COMPRA REAL: SIN MODALES DE DECORACIÓN */
-          <div className={styles.noPlanContainer}>
-            <div className={styles.purchaseCard}>
-              <div className={styles.purchaseIcon}>🔓</div>
-              <h2>No tienes un plan activo</h2>
-              <p>Adquiere tu mensualidad para disfrutar de acceso ilimitado a las celdas de AeroParking.</p>
-              
-              <div className={styles.planPriceContainer}>
-                <span className={styles.planNameLabel}>PLAN MENSUAL</span>
-                <h1 className={styles.planPrice}>$180.000 <span>/ Mes</span></h1>
+          /* VISTA DIRECTA DE COMPRA REAL: REORGANIZADA CON LAS CLASES CORRECTAS DE TU CSS */
+          <div className={styles.planCard}>
+            <div className={styles.planHeader}>
+              <div className={styles.planTitleContainer}>
+                <h2>No tienes un plan activo</h2>
               </div>
+            </div>
+            
+            <p style={{ color: '#94a3b8', marginBottom: '24px', fontSize: '14px' }}>
+              Adquiere tu mensualidad para disfrutar de acceso ilimitado a las celdas de AeroParking.
+            </p>
+            
+            <div className={styles.planGrid} style={{ gridTemplateColumns: '1fr', marginBottom: '24px' }}>
+              <div className={styles.infoBox}>
+                <span className={styles.infoLabel}>PLAN MENSUAL</span>
+                <h2 className={styles.infoValue} style={{ fontSize: '28px', color: '#00c6ff' }}>
+                  $180.000 <span style={{ fontSize: '14px', color: '#64748b' }}>/ Mes</span>
+                </h2>
+              </div>
+            </div>
 
-              {/* CORRECCIÓN CLAVE: El click llama directamente a la API real de Mercado Pago */}
+            <div className={styles.actionsContainer}>
               <button 
-                className={styles.btnComprar} 
+                className={styles.btnPrimary} 
                 onClick={iniciarPagoRealPSE}
                 disabled={cargandoPago}
               >

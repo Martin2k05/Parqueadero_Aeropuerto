@@ -3,45 +3,56 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #0b132b;
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #090f24;
+  padding: 24px;
 }
 
+/* Caja de Registro Estilo Glassmorphism Completo */
 .registerCard {
-  background-color: #1c2541;
-  border: 1px solid #2a3454;
-  border-radius: 12px;
+  background: rgba(20, 32, 71, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 24px;
   width: 100%;
-  max-width: 700px;
-  padding: 35px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  max-width: 750px;
+  padding: 40px;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
   text-align: center;
   color: #ffffff;
 }
 
+/* Icono del Logo */
 .logoIcon {
-  background-color: #0072ff;
-  width: 45px;
-  height: 45px;
-  border-radius: 10px;
+  background: linear-gradient(135deg, #0052d4, #00bfff);
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 15px auto;
-  font-size: 20px;
+  margin: 0 auto 18px auto;
+  box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+}
+
+.registerCard h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 6px 0;
 }
 
 .subtitle {
   color: #64748b;
-  font-size: 14px;
-  margin: -10px 0 25px 0;
+  font-size: 0.95rem;
+  margin: 0 0 32px 0;
 }
 
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 24px;
   text-align: left;
 }
 
@@ -56,126 +67,134 @@
 }
 
 .inputGroup label {
-  font-size: 13px;
-  color: #9ca3af;
-  font-weight: 500;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Contenedor de Inputs con Iconos Internos */
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fieldIcon {
+  position: absolute;
+  left: 16px;
+  color: #475569;
+  transition: color 0.3s ease;
 }
 
 .inputGroup input {
   width: 100%;
-  background-color: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 8px;
-  padding: 12px 15px;
-  color: #f1f5f9;
-  font-size: 14px;
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid #22346e;
+  border-radius: 12px;
+  padding: 14px 14px 14px 48px;
+  color: #ffffff;
+  font-size: 0.95rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.3s ease;
 }
 
 .inputGroup input:focus {
-  border-color: #0072ff;
+  border-color: #0066ff;
+  background-color: #142047;
+  box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.15);
+}
+
+.inputGroup input:focus + .fieldIcon {
+  color: #38bdf8;
 }
 
 .inputLabelHint {
-  font-size: 11px;
+  font-size: 0.75rem;
   color: #64748b;
-  font-weight: bold;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  text-align: left; 
-  padding-left: 2px; /* Pequeño ajuste para alinearse con el input */
+  margin-bottom: 4px;
 }
 
-/* Sub-grid especial para partir la dirección en 4 columnas idénticas */
+/* Distribución de la Dirección Compuesta */
 .direccionGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  text-align: left; /* Forzar alineación a la izquierda */
+  gap: 14px;
   width: 100%;
 }
 
-.subInput {
-  width: 100%;
+.subInputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.subInputContainer input {
-  text-align: left !important; /* Quita cualquier centrado heredado */
-  padding-left: 12px !important; /* Padding normal y limpio, sin espacio para íconos */
-  padding-right: 12px;
+.direccionGrid .subInputContainer input {
+  text-align: left !important;
+  padding-left: 16px !important;
+  padding-right: 16px;
   width: 100%;
-  box-sizing: border-box; /* Evita que el padding ensanche la caja */
+  box-sizing: border-box;
 }
 
 .spacer {
   display: block;
 }
 
+/* Botones y Acciones de Formulario */
 .formActions {
   display: flex;
   justify-content: space-between;
-  gap: 15px;
-  margin-top: 15px;
+  gap: 16px;
+  margin-top: 12px;
 }
 
 .btnVolver {
   flex: 1;
-  background-color: #242f52;
+  background-color: #1e293b;
   color: #ffffff;
-  border: 1px solid #323f6b;
+  border: 1px solid #334155;
   padding: 14px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .btnVolver:hover {
-  background-color: #2c3a66;
+  background-color: #334155;
 }
 
 .btnRegistrar {
   flex: 1;
-  background: linear-gradient(135deg, #0072ff, #00c6ff);
+  background: linear-gradient(90deg, #0052d4, #00bfff);
   color: white;
   border: none;
   padding: 14px;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 12px;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 14px;
-  transition: opacity 0.2s;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btnRegistrar:hover {
-  opacity: 0.9;
+  transform: scale(1.01);
+  box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
+  filter: brightness(1.05);
 }
 
-.errorMessage {
-  background-color: rgba(239, 68, 68, 0.2);
-  border: 1px solid #ef4444;
-  color: #fca5a5;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-.successMessage {
-  background-color: rgba(16, 185, 129, 0.2);
-  border: 1px solid #10b981;
-  color: #a7f3d0;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-@media (max-width: 600px) {
+/* Optimizaciones de Media Queries */
+@media (max-width: 768px) {
   .formGrid {
     grid-template-columns: 1fr;
   }
@@ -183,9 +202,12 @@
     grid-column: span 1;
   }
   .direccionGrid {
-    grid-template-columns: repeat(2, 1fr); /* En celulares se parte en 2x2 para que no se achiquite */
+    grid-template-columns: repeat(2, 1fr);
   }
   .spacer {
     display: none;
+  }
+  .formActions {
+    flex-direction: column-reverse;
   }
 }

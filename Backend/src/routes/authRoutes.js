@@ -108,7 +108,7 @@ const registroManejador = async (req, res) => {
 
     const [resultado] = await db.query(
       `INSERT INTO clientes (
-        nombre_cliente, identificacion, correo, telefono_numero, 
+        nombre_cliente, identificacion, correo, telefono, 
         dir_barrio, dir_calle, dir_carrera, dir_numero, 
         contrasena, placa_vehiculo
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -153,7 +153,7 @@ const obtenerPerfilManejador = async (req, res) => {
         id_cliente,
         nombre_cliente, nombre_cliente AS nombre, nombre_cliente AS nombreCompleto, nombre_cliente AS nombre_completo,
         correo, correo AS email, correo AS correoElectronico, correo AS correo_electronico,
-        telefono_numero AS telefono, telefono_numero AS celular, telefono_numero AS telefonoCelular, telefono_numero AS telefono_celular,
+        telefono AS telefono, telefono AS celular, telefono AS telefonoCelular, telefono AS telefono_celular,
         identificacion, identificacion AS cedula,
         dir_barrio, dir_barrio AS barrio,
         dir_calle, dir_calle AS calle_av, dir_calle AS calle,
@@ -237,7 +237,7 @@ const actualizarPerfilManejador = async (req, res) => {
         nombre_cliente = ?, 
         identificacion = ?, 
         correo = ?, 
-        telefono_numero = ?, 
+        telefono = ?, 
         dir_barrio = ?, 
         dir_calle = ?, 
         dir_carrera = ?, 

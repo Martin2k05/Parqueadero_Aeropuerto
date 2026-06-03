@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     dir_calle VARCHAR(30),
     dir_carrera VARCHAR(30),
     dir_numero VARCHAR(20),
-    telefono_numero VARCHAR(20),
+    telefono VARCHAR(20),
     contrasena VARCHAR(255) NOT NULL,
     placa_vehiculo VARCHAR(10) NULL,
     FOREIGN KEY (placa_vehiculo) REFERENCES vehiculos(placa_vehiculo) ON DELETE SET NULL

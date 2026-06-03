@@ -99,7 +99,7 @@
   justify-content: space-between;
   height: 128px;
   padding-top: 16px;
-  border-b: 1px solid #334155;
+  border-bottom: 1px solid #334155;
 }
 
 .barGroup {
