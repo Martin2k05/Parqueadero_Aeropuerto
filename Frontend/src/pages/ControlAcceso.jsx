@@ -53,7 +53,7 @@ const ControlAcceso = () => {
     const data = await res.json();
     
     if(res.ok) {
-        toast.success(data.message); // Aquí aparecerá el precio enviado por el backend
+        toast.success(data.message);
         cargarVehiculos();
     } else {
         toast.error("Error al registrar salida");
