@@ -3,33 +3,60 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // ==========================================
-// CONTROLADOR INTEGRADO DE LOGIN
+// CONTROLADOR DE LOGIN INTEGRADO Y ESCALABLE
 // ==========================================
 exports.login = async (req, res) => {
   const { correo, contrasena } = req.body;
 
   try {
-    // 1. Buscar primero en la tabla de usuarios internos (Admin / Operario)
-    let [users] = await db.query(
-      'SELECT u.*, r.nombre_rol FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol WHERE u.correo = ?',
-      [correo]
-    );
+    console.log('=== INTENTO DE LOGIN ===');
+    console.log('Correo recibido:', correo);
+
+    if (!correo || !contrasena) {
+      return res.status(400).json({ message: 'Correo y contraseña son requeridos.' });
+    }
 
     let usuarioEncontrado = null;
     let rolUsuario = '';
     let idRef = null;
+    let placaDetectada = 'Sin Placa';
 
+    // 1. Buscar en la tabla de usuarios internos (Admin / Operario)
+    const [users] = await db.query(
+      'SELECT u.*, r.nombre_rol FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol WHERE u.correo = ?',
+      [correo]
+    );
+    
     if (users.length > 0) {
       usuarioEncontrado = users[0];
       rolUsuario = usuarioEncontrado.nombre_rol;
       idRef = usuarioEncontrado.id_usuario;
-    } else {
-      // 2. Si no está en usuarios, buscar en la tabla de clientes
-      let [clients] = await db.query('SELECT * FROM clientes WHERE correo = ?', [correo]);
+      console.log(`👤 Usuario interno detectado con rol: ${rolUsuario}`);
+    } 
+    // 2. Si no es un usuario interno, buscar en la tabla de clientes
+    else {
+      console.log('🔍 No se encontró en usuarios. Buscando en tabla clientes...');
+      const [clients] = await db.query('SELECT * FROM clientes WHERE correo = ? ORDER BY id_cliente DESC LIMIT 1', [correo]);
+      
       if (clients.length > 0) {
         usuarioEncontrado = clients[0];
         rolUsuario = 'Cliente';
         idRef = usuarioEncontrado.id_cliente;
+        console.log('🚗 Cliente detectado en la base de datos.');
+
+        // Extraer placa del cliente de forma segura
+        if (usuarioEncontrado.placa_vehiculo && usuarioEncontrado.placa_vehiculo !== "NULL" && usuarioEncontrado.placa_vehiculo !== "null") {
+          placaDetectada = usuarioEncontrado.placa_vehiculo;
+        } else {
+          // Buscar de emergencia en mensualidades
+          const [vehiculoRows] = await db.query(
+            'SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1', 
+            [idRef]
+          );
+          if (vehiculoRows.length > 0 && vehiculoRows[0].placa_vehiculo) {
+            placaDetectada = vehiculoRows[0].placa_vehiculo;
+          }
+        }
       }
     }
 
@@ -38,17 +65,25 @@ exports.login = async (req, res) => {
     }
 
     // Validar contraseña
-    const passwordCorrect = await bcrypt.compare(contrasena, usuarioEncontrado.contrasena);
+    const hashContrasena = usuarioEncontrado.contrasena;
+    const passwordCorrect = await bcrypt.compare(contrasena, hashContrasena);
+    
     if (!passwordCorrect) {
       return res.status(401).json({ message: 'Contraseña incorrecta.' });
     }
 
-    // Generar Token JWT usando estrictamente la clave del .env
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ ERROR CRÍTICO: process.env.JWT_SECRET no está definido en el archivo .env');
+      return res.status(500).json({ message: 'Error de configuración en el servidor.' });
+    }
+
     const token = jwt.sign(
       { id: idRef, correo: usuarioEncontrado.correo, rol: rolUsuario },
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
+
+    console.log(`🚀 Login exitoso. Token generado para [${rolUsuario}] ID: ${idRef} con Placa: ${placaDetectada}`);
 
     res.json({
       token,
@@ -56,13 +91,14 @@ exports.login = async (req, res) => {
         id: idRef,
         nombre: usuarioEncontrado.nombre_usuario || usuarioEncontrado.nombre_cliente,
         correo: usuarioEncontrado.correo,
-        rol: rolUsuario
+        rol: rolUsuario,
+        placa_vehiculo: placaDetectada 
       }
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error interno del servidor en el inicio de sesión.' });
+    console.error('❌ ERROR GENERAL EN LOGIN:', error);
+    res.status(500).json({ message: 'Error interno del servidor en el inicio de sesión.', detail: error.message });
   }
 };
 
@@ -70,21 +106,10 @@ exports.login = async (req, res) => {
 // CONTROLADOR INTEGRADO DE REGISTRO
 // ==========================================
 exports.registerCliente = async (req, res) => {
-  const { 
-    nombreCompleto, 
-    identificacion, 
-    correo, 
-    telefono, 
-    calle, 
-    carrera, 
-    numero, 
-    barrio, 
-    placa_vehiculo, 
-    contrasena 
-  } = req.body;
+  const { nombreCompleto, identificacion, correo, telefono, calle, carrera, numero, barrio, contrasena } = req.body;
+  const placa_vehiculo = req.body.placaVehiculo || req.body.placa_vehiculo || null;
 
   try {
-    // 1. Validar si el correo ya existe
     const [existCheck] = await db.query(
       'SELECT correo FROM clientes WHERE correo = ? UNION SELECT correo FROM usuarios WHERE correo = ?', 
       [correo, correo]
@@ -93,36 +118,20 @@ exports.registerCliente = async (req, res) => {
       return res.status(400).json({ message: 'El correo electrónico ya está registrado.' });
     }
 
-    // 2. Encriptar contraseña
     const salt = await bcrypt.genSalt(10);
     const hashContrasena = await bcrypt.hash(contrasena, salt);
 
-    // 3. Insertar el vehículo si no existe en la base de datos global
     if (placa_vehiculo) {
       const placaFormateada = placa_vehiculo.trim().toUpperCase().substring(0, 10);
       await db.query('INSERT IGNORE INTO vehiculos (placa_vehiculo) VALUES (?)', [placaFormateada]);
     }
 
-    // 4. Insertar en la tabla clientes
-    const [resultado] = await db.query(
-      `INSERT INTO clientes (
-        nombre_cliente, 
-        identificacion, 
-        correo, 
-        dir_barrio, 
-        dir_calle, 
-        dir_carrera, 
-        dir_numero, 
-        telefono, 
-        contrasena
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nombreCompleto, identificacion, correo, barrio, calle, carrera, numero, telefono, hashContrasena]
+    await db.query(
+      `INSERT INTO clientes (nombre_cliente, identificacion, correo, dir_barrio, dir_calle, dir_carrera, dir_numero, telefono, contrasena, placa_vehiculo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nombreCompleto, identificacion, correo, barrio, calle, carrera, numero, telefono, hashContrasena, placa_vehiculo ? placa_vehiculo.trim().toUpperCase().substring(0, 10) : null]
     );
 
-    const nuevoIdCliente = resultado.insertId;
-
-    res.status(201).json({ message: 'Registro exitoso.', id: nuevoIdCliente });
-
+    res.status(201).json({ message: 'Registro exitoso. Ahora puedes iniciar sesión y comprar tu plan.' });
   } catch (error) {
     console.error('Error en el registro del cliente:', error);
     res.status(500).json({ message: 'Error en el registro del cliente.' });
@@ -137,7 +146,7 @@ exports.obtenerPerfil = async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      `SELECT id_cliente, nombre_cliente, correo, telefono, identificacion, dir_barrio, dir_calle, dir_carrera, dir_numero FROM clientes WHERE id_cliente = ?`,
+      `SELECT id_cliente, nombre_cliente, correo, telefono, identificacion, dir_barrio, dir_calle, dir_carrera, dir_numero, placa_vehiculo FROM clientes WHERE id_cliente = ?`,
       [idCliente]
     );
 
@@ -146,14 +155,19 @@ exports.obtenerPerfil = async (req, res) => {
     }
 
     const infoCliente = rows[0];
+    let placaFinal = infoCliente.placa_vehiculo;
 
-    // Buscar la última placa amarrada a sus mensualidades compradas
-    const [vehiculoRows] = await db.query(
-      `SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1`, 
-      [idCliente]
-    );
-
-    infoCliente.placa_vehiculo = vehiculoRows.length > 0 ? vehiculoRows[0].placa_vehiculo : "Sin Placa";
+    // Control estricto de nulos para la placa
+    if (!placaFinal || placaFinal === "NULL" || placaFinal === "null" || placaFinal === "") {
+      const [vehiculoRows] = await db.query(
+        `SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1`, 
+        [idCliente]
+      );
+      placaFinal = (vehiculoRows.length > 0 && vehiculoRows[0].placa_vehiculo) ? vehiculoRows[0].placa_vehiculo : "Sin Placa";
+    }
+    
+    // Asignamos la placa limpia antes de enviar el JSON
+    infoCliente.placa_vehiculo = placaFinal;
     
     return res.json(infoCliente);
 
@@ -190,9 +204,15 @@ exports.actualizarPerfil = async (req, res) => {
 // CONTROLADOR CAMBIAR CONTRASEÑA
 // ==========================================
 exports.cambiarContrasena = async (req, res) => {
-  const { actual, nueva } = req.body;
+  const actual = req.body.password || req.body.actual;
+  const nueva = req.body.nuevaContrasena || req.body.nueva;
+  
   const idUsuario = req.user.id;
   const rolUsuario = req.user.rol;
+
+  if (!actual || !nueva) {
+    return res.status(400).json({ message: 'La contraseña actual y la nueva son requeridas.' });
+  }
 
   try {
     let queryBuscar = '';

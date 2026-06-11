@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
-import styles from './ControlAcceso.module.css';
+import styles from './Styles/ControlAcceso.module.css';
 
 const ControlAcceso = () => {
   const [placa, setPlaca] = useState('');

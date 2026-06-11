@@ -2,15 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { CreditCard, Calendar, Car } from 'lucide-react';
-import styles from './ClienteDashboard.module.css';
+import styles from './Styles/ClienteDashboard.module.css';
 
 const ClienteDashboard = () => {
   const navigate = useNavigate();
-  // Estado inicializado en 'NINGUNO' para evitar falsos positivos antes del fetch
+  
+  // 1. Traemos el usuario guardado en el LocalStorage al loguearse
+  const usuarioLocal = JSON.parse(localStorage.getItem('user')) || {};
+  
+  // 2. Extraemos y limpiamos la placa de la sesión (quitando espacios y nulos)
+  let placaInicial = (usuarioLocal.placa_vehiculo || usuarioLocal.placa || '').toString().trim();
+  if (placaInicial === 'NULL' || placaInicial === 'null' || placaInicial === '') {
+    placaInicial = 'No Registrada';
+  }
+
+  // Estado inicial de la vista
   const [data, setData] = useState({ 
     planActual: 'NINGUNO', 
     diasRestantes: 0, 
-    placaVehiculo: 'No Registrada', 
+    placaVehiculo: placaInicial, // Asigna la placa del login de entrada
     validoHasta: 'N/A' 
   });
 
@@ -20,21 +30,41 @@ const ClienteDashboard = () => {
     })
     .then(res => res.json())
     .then(resData => {
+      // 3. Capturar lo que responda la API
+      let placaAPI = resData.placaVehiculo || resData.placa_vehiculo;
+      
+      // Convertir a string y limpiar espacios en blanco
+      if (placaAPI) {
+        placaAPI = placaAPI.toString().trim();
+      }
+
+      // 4. CONTROL TOTAL: Si viene vacía, nula, o mide menos de 3 caracteres, usamos la del LocalStorage
+      if (!placaAPI || placaAPI === 'NULL' || placaAPI === 'null' || placaAPI === '' || placaAPI.length < 3) {
+        placaAPI = placaInicial;
+      }
+
       setData({
         planActual: resData.planActual || 'NINGUNO',
         diasRestantes: resData.diasRestantes || 0,
-        placaVehiculo: resData.placaVehiculo || 'No Registrada',
+        placaVehiculo: placaAPI, // Guarda de forma segura sin peligro de sobreescritura vacía
         validoHasta: resData.validoHasta || 'N/A'
       });
     })
-    .catch(err => console.error(err));
-  }, []);
+    .catch(err => {
+      console.error('Error en fetch dashboard:', err);
+      // Si la API se cae o da error, retenemos la placa del localStorage en la pantalla
+      setData(prev => ({
+        ...prev,
+        placaVehiculo: placaInicial
+      }));
+    });
+  }, [placaInicial]);
 
   return (
     <div className={styles.layout}>
       <Sidebar />
       <div className={styles.content}>
-        <h1>Bienvenido, {JSON.parse(localStorage.getItem('user'))?.nombre}</h1>
+        <h1>Bienvenido, {usuarioLocal?.nombre || 'Cliente'}</h1>
         <p>Estado de tu plan mensual</p>
 
         <div className={styles.grid}>

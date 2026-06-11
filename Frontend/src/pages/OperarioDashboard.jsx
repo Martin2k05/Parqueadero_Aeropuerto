@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
-import styles from './OperarioDashboard.module.css';
+import styles from './Styles/OperarioDashboard.module.css';
 
 const OperarioDashboard = () => {
   const [dash, setDash] = useState(null);

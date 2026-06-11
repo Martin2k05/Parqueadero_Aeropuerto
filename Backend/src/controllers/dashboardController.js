@@ -43,18 +43,32 @@ exports.getClienteDashboard = async (req, res) => {
   const idCliente = req.user.id;
 
   try {
-    // 1. Consultar si tiene compras/mensualidades reales
+    // 1. Buscamos de emergencia la placa nativa registrada en su cuenta de cliente
+    const [clienteFila] = await db.query(
+      'SELECT placa_vehiculo FROM clientes WHERE id_cliente = ?',
+      [idCliente]
+    );
+    
+    let placaBaseDeDatos = 'No Registrada';
+    if (clienteFila.length > 0 && clienteFila[0].placa_vehiculo) {
+      const placaLimpia = clienteFila[0].placa_vehiculo.toString().trim();
+      if (placaLimpia !== 'NULL' && placaLimpia !== 'null' && placaLimpia !== '') {
+        placaBaseDeDatos = placaLimpia;
+      }
+    }
+
+    // 2. Consultar si tiene compras/mensualidades reales
     const [plan] = await db.query(
       'SELECT m.*, DATEDIFF(m.fecha_final, CURDATE()) AS dias_restantes FROM mensualidades m WHERE m.id_cliente = ? ORDER BY m.id_mensualidad DESC LIMIT 1',
       [idCliente]
     );
 
-    // Si el cliente es nuevo y NUNCA ha pagado por Mercado Pago:
+    // Si el cliente es nuevo y NUNCA ha comprado una mensualidad:
     if (plan.length === 0) {
       return res.status(200).json({
         planActual: 'NINGUNO',
         diasRestantes: 0,
-        placaVehiculo: 'No Registrada', // Mostramos el texto del diseño pero con estado 200 exitoso
+        placaVehiculo: placaBaseDeDatos, // 👈 Ahora sí devuelve su placa real registrada
         validoHasta: 'N/A'
       });
     }
@@ -63,10 +77,16 @@ exports.getClienteDashboard = async (req, res) => {
     const diasRestantesCalculados = infoPlan.dias_restantes ? Math.max(0, infoPlan.dias_restantes) : 0;
     const esVigente = diasRestantesCalculados > 0;
 
+    // Si hay mensualidad, priorizamos la placa del plan; si no viene ahí, usamos la nativa del cliente
+    let placaRespuesta = infoPlan.placa_vehiculo || placaBaseDeDatos;
+    if (placaRespuesta === 'NULL' || placaRespuesta === 'null' || placaRespuesta.toString().trim() === '') {
+      placaRespuesta = placaBaseDeDatos;
+    }
+
     return res.status(200).json({
       planActual: esVigente ? 'PREMIUM' : 'NINGUNO',
       diasRestantes: diasRestantesCalculados,
-      placaVehiculo: infoPlan.placa_vehiculo || 'No Registrada',
+      placaVehiculo: placaRespuesta, // 👈 Envío blindado de datos reales
       validoHasta: esVigente && infoPlan.fecha_final ? infoPlan.fecha_final : 'N/A'
     });
 
@@ -79,18 +99,49 @@ exports.getClienteDashboard = async (req, res) => {
 exports.getPerfilCliente = async (req, res) => {
   const idCliente = req.user.id;
   try {
-    const [data] = await db.query('SELECT id_cliente, nombre_cliente, correo, identificacion FROM clientes WHERE id_cliente = ?', [idCliente]);
-    const [vehiculos] = await db.query('SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1', [idCliente]);
+    // 🕵️‍♂️ CORREGIDO: Añadimos teléfono y todos los campos desglosados de la dirección al SELECT
+    const [data] = await db.query(
+      `SELECT 
+        id_cliente, 
+        nombre_cliente, 
+        correo, 
+        identificacion, 
+        telefono, 
+        dir_calle, 
+        dir_carrera, 
+        dir_numero, 
+        dir_barrio 
+       FROM clientes WHERE id_cliente = ?`, 
+      [idCliente]
+    );
+    
+    // Si el cliente no tiene mensualidades, buscamos la placa nativa con la que se registró
+    const [vehiculos] = await db.query(
+      'SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1', 
+      [idCliente]
+    );
     
     if (data.length === 0) return res.status(404).json({ message: 'Cliente no encontrado' });
 
+    const cliente = data[0];
+    // Si no tiene mensualidad activa, saca la placa con la que se registró originalmente
+    const placaFinal = vehiculos.length > 0 ? vehiculos[0].placa_vehiculo : (cliente.placa_vehiculo || 'Sin Placa');
+
+    // 🚀 CORREGIDO: Enviamos el JSON mapeado con los nombres exactos que tu Front espera recibir
     res.json({
-      nombre: data[0].nombre_cliente,
-      correo: data[0].correo,
-      identificacion: data[0].identificacion,
-      placa: vehiculos.length > 0 ? vehiculos[0].placa_vehiculo : 'Sin Placa'
+      nombre_cliente: cliente.nombre_cliente,
+      correo: cliente.correo,
+      identificacion: cliente.identificacion,
+      telefono: cliente.telefono || '',
+      dir_calle: cliente.dir_calle || '',
+      dir_carrera: cliente.dir_carrera || '',
+      dir_numero: cliente.dir_numero || '',
+      dir_barrio: cliente.dir_barrio || '',
+      placa_vehiculo: placaFinal
     });
+
   } catch (error) {
+    console.error('Error al obtener perfil del cliente:', error);
     res.status(500).json({ message: 'Error al obtener perfil' });
   }
 };

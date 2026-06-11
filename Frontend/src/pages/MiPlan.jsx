@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Notification from '../components/Notification';
-import styles from './MiPlan.module.css';
+import styles from './Styles/MiPlan.module.css';
 
 const MiPlan = () => {
   const [loading, setLoading] = useState(true);

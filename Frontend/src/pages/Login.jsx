@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Plane } from 'lucide-react';
-import styles from './Login.module.css';
+import styles from './Styles/Login.module.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({ correo: '', contrasena: '' });

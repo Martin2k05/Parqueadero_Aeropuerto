@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Plane, User, Hash, Mail, Phone, Car, Lock, ArrowLeft } from 'lucide-react';
-import styles from './Register.module.css';
+import styles from './Styles/Register.module.css';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ const Register = () => {
     carrera: '',
     numero: '',
     barrio: '',
-    placaVehiculo: '',
+    placa_Vehiculo: '',
     contrasena: '',
     confirmarContrasena: ''
   });

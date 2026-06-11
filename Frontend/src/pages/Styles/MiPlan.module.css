@@ -183,3 +183,21 @@
 .btnSecondary:hover {
   background-color: #242f52;
 }
+
+/* ==========================================
+   🚨 CONTENEDOR DE NOTIFICACIONES CORREGIDO
+   ========================================== */
+.notificationContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999; /* Asegura que flote por encima de todo el contenido */
+  pointer-events: none; /* Evita que un contenedor invisible bloquee los clics */
+}
+
+/* Si tu componente <Notification> necesita estilos base, esto asegura que reaccione bien */
+.notificationContainer > div {
+  pointer-events: auto; /* Reactiva los clics dentro de la tarjeta de la alerta */
+  margin-bottom: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}

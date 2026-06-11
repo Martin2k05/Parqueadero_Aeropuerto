@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import { toast } from 'sonner';
-import { User, Mail, Phone, Hash, Car, Lock, Key, RefreshCw, X, Shield } from 'lucide-react';
-import styles from './MiPerfil.module.css';
+import { User, Mail, Phone, Hash, Car, Lock, Key, RefreshCw, X, Shield, Eye, EyeOff } from 'lucide-react';
+import styles from './Styles/MiPerfil.module.css';
 
 const MiPerfil = () => {
   const [editando, setEditando] = useState(false);
@@ -21,12 +21,15 @@ const MiPerfil = () => {
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ actual: '', nueva: '', confirmar: '' });
+  
+  const [verActual, setVerActual] = useState(false);
+  const [verNueva, setVerNueva] = useState(false);
+  const [verConfirmar, setVerConfirmar] = useState(false);
 
   useEffect(() => {
     const cargarDatosPerfil = async () => {
       try {
         const token = localStorage.getItem('token');
-        // CORREGIDO: Apunta a /api/dashboard/perfil-cliente según la ruta mapeada en el backend
         const respuesta = await fetch('http://localhost:5000/api/dashboard/perfil-cliente', {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` }
@@ -34,16 +37,24 @@ const MiPerfil = () => {
         const datos = await respuesta.json();
 
         if (respuesta.ok) {
+          // 🔥 FILTRO ESTRICTO DE TEXTO: Evita que "NULL" en string rompa el input
+          let placaLimpia = datos.placa_vehiculo || datos.placa || datos.placaVehiculo || '';
+          if (placaLimpia === 'NULL' || placaLimpia === 'null' || !placaLimpia) {
+            // Intenta buscar el respaldo del usuario de la sesión antes de poner "Sin Placa"
+            const usuarioSesion = JSON.parse(localStorage.getItem('user')) || {};
+            placaLimpia = usuarioSesion.placa_vehiculo || 'Sin Placa';
+          }
+
           setPerfil({
-            nombre_cliente: datos.nombre || datos.nombre_cliente || '',
-            identificacion: datos.identificacion || '',
-            correo: datos.correo || '',
-            telefono: datos.telefono || '',
-            dir_calle: datos.dir_calle || '',
-            dir_carrera: datos.dir_carrera || '',
-            dir_numero: datos.dir_numero || '',
-            dir_barrio: datos.dir_barrio || '',
-            placa_vehiculo: datos.placa || datos.placa_vehiculo || 'Sin Placa'
+            nombre_cliente: datos.nombre_cliente || datos.nombre || datos.nombreCompleto || '',
+            identificacion: datos.identificacion || datos.cedula || '',
+            correo: datos.correo || datos.email || datos.correoElectronico || '',
+            telefono: datos.telefono || datos.celular || datos.telefonoCelular || '',
+            dir_calle: datos.dir_calle || datos.calle || datos.calle_av || '',
+            dir_carrera: datos.dir_carrera || datos.carrera || '',
+            dir_numero: datos.dir_numero || datos.numero || '',
+            dir_barrio: datos.dir_barrio || datos.barrio || '',
+            placa_vehiculo: placaLimpia
           });
         } else {
           toast.error('Error de perfil', { description: datos.message || 'Error al cargar perfil.' });
@@ -117,7 +128,10 @@ const MiPerfil = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ actual: passwordForm.actual, nueva: passwordForm.nueva })
+        body: JSON.stringify({ 
+          password: passwordForm.actual, 
+          nuevaContrasena: passwordForm.nueva 
+        })
       });
 
       const datos = await respuesta.json();
@@ -126,6 +140,9 @@ const MiPerfil = () => {
         toast.success('Contraseña modificada', { description: datos.message || '¡Contraseña modificada correctamente!' });
         setModalAbierto(false);
         setPasswordForm({ actual: '', nueva: '', confirmar: '' });
+        setVerActual(false);
+        setVerNueva(false);
+        setVerConfirmar(false);
       } else {
         toast.error('Error de seguridad', { description: datos.message || 'Hubo un error al actualizar.' });
       }
@@ -286,40 +303,94 @@ const MiPerfil = () => {
         </div>
       </main>
 
+      {/* MODAL */}
       {modalAbierto && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h3>Modificar Contraseña</h3>
+              <div>
+                <h3>Modificar Contraseña</h3>
+                <p className={styles.modalSubtitle}>Asegura el acceso a tu cuenta en AeroParking</p>
+              </div>
               <button className={styles.btnCloseX} onClick={() => setModalAbierto(false)}>
                 <X size={20} />
               </button>
             </div>
+            
             <form onSubmit={guardarContrasena} className={styles.modalForm}>
-              <div className={styles.inputGroup}>
+              <div className={styles.modalInputGroup}>
                 <label>Contraseña Actual</label>
                 <div className={styles.inputWrapper}>
-                  <Lock size={18} className={styles.inputIcon} />
-                  <input type="password" name="actual" value={passwordForm.actual} onChange={(e) => setPasswordForm({...passwordForm, actual: e.target.value})} required />
+                  <Lock size={18} className={styles.modalInputIcon} />
+                  <input 
+                    type={verActual ? "text" : "password"} 
+                    name="actual" 
+                    placeholder="••••••••"
+                    value={passwordForm.actual} 
+                    onChange={(e) => setPasswordForm({...passwordForm, actual: e.target.value})} 
+                    required 
+                  />
+                  <button 
+                    type="button" 
+                    className={styles.btnTogglePassword} 
+                    onClick={() => setVerActual(!verActual)}
+                  >
+                    {verActual ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
-              <div className={styles.inputGroup}>
+
+              <div className={styles.modalInputGroup}>
                 <label>Nueva Contraseña</label>
                 <div className={styles.inputWrapper}>
-                  <Key size={18} className={styles.inputIcon} />
-                  <input type="password" name="nueva" value={passwordForm.nueva} onChange={(e) => setPasswordForm({...passwordForm, nueva: e.target.value})} required />
+                  <Key size={18} className={styles.modalInputIcon} />
+                  <input 
+                    type={verNueva ? "text" : "password"} 
+                    name="nueva" 
+                    placeholder="Mínimo 6 caracteres"
+                    value={passwordForm.nueva} 
+                    onChange={(e) => setPasswordForm({...passwordForm, nueva: e.target.value})} 
+                    required 
+                  />
+                  <button 
+                    type="button" 
+                    className={styles.btnTogglePassword} 
+                    onClick={() => setVerNueva(!verNueva)}
+                  >
+                    {verNueva ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
-              <div className={styles.inputGroup}>
+
+              <div className={styles.modalInputGroup}>
                 <label>Confirmar Nueva Contraseña</label>
                 <div className={styles.inputWrapper}>
-                  <RefreshCw size={18} className={styles.inputIcon} />
-                  <input type="password" name="confirmar" value={passwordForm.confirmar} onChange={(e) => setPasswordForm({...passwordForm, confirmar: e.target.value})} required />
+                  <RefreshCw size={18} className={styles.modalInputIcon} />
+                  <input 
+                    type={verConfirmar ? "text" : "password"} 
+                    name="confirmar" 
+                    placeholder="Repite la nueva contraseña"
+                    value={passwordForm.confirmar} 
+                    onChange={(e) => setPasswordForm({...passwordForm, confirmar: e.target.value})} 
+                    required 
+                  />
+                  <button 
+                    type="button" 
+                    className={styles.btnTogglePassword} 
+                    onClick={() => setVerConfirmar(!verConfirmar)}
+                  >
+                    {verConfirmar ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
+
               <div className={styles.modalActions}>
-                <button type="button" className={styles.btnSecondary} onClick={() => setModalAbierto(false)}>Cancelar</button>
-                <button type="submit" className={styles.btnPrimary}>Actualizar Contraseña</button>
+                <button type="button" className={styles.btnSecondary} onClick={() => setModalAbierto(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className={styles.btnModalSubmit}>
+                  Actualizar Contraseña
+                </button>
               </div>
             </form>
           </div>
