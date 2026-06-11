@@ -1,7 +1,7 @@
 .layout {
   display: flex;
   height: 100vh;
-  background-color: #0b1120; /* Color de fondo oscuro principal */
+  background-color: #090f24;
 }
 
 .content {
@@ -11,10 +11,11 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  width: 100%; /* Asegura que el contenido ocupe el ancho */
 }
 
 .header h1 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #ffffff;
 }
@@ -24,46 +25,42 @@
   color: #94a3b8;
 }
 
-.alert {
-  background-color: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
-  padding: 12px;
-  border-radius: 12px;
-  max-width: 896px;
-  font-size: 0.875rem;
-}
-
 .panel {
-  background-color: #1e293b; /* Color de las tarjetas */
-  border: 1px solid #334155;
+  background-color: #111a36;
+  border: 1px solid #1e2d5a;
   padding: 24px;
-  border-radius: 16px;
-  max-width: 896px;
+  border-radius: 12px;
+  width: 100%; /* Cambiado de max-width a width 100% para que se estire */
+  box-sizing: border-box; /* Importante para que el padding no afecte el ancho */
 }
 
 .panel h2 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 20px;
-  color: #ffffff;
+  margin-bottom: 16px;
+  color: #cbd5e1;
 }
 
-/* Header interno del panel para el buscador */
 .listHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  flex-direction: column;
+  margin-bottom: 16px;
 }
 
 .searchBar {
-  background: #0f172a;
-  border: 1px solid #334155;
-  padding: 10px 16px;
-  border-radius: 8px;
-  color: white;
-  width: 250px;
+  width: 100%;
+  background-color: #18254b;
+  border: 1px solid #233568;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  box-sizing: border-box; /* Asegura que el padding no cause desbordamiento */
+}
+
+.searchBar:focus {
+  outline: none;
+  border-color: #3b82f6;
 }
 
 .formInline {
@@ -86,19 +83,20 @@
 
 .inputGroup label {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #94a3b8;
   margin-bottom: 8px;
 }
 
 .inputGroup input, .inputGroup select {
   width: 100%;
-  background-color: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 8px;
+  background-color: #18254b;
+  border: 1px solid #233568;
+  border-radius: 12px;
   padding: 12px 16px;
   color: #ffffff;
   font-size: 1rem;
+  box-sizing: border-box;
 }
 
 .inputGroup input:focus, .inputGroup select:focus {
@@ -107,19 +105,18 @@
 }
 
 .submitBtn {
-  background-color: #0088ff;
+  background-color: #059669;
   color: #ffffff;
   font-weight: 600;
   padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 1rem;
-  white-space: nowrap;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
+  white-space: nowrap; /* Evita que el botón se deforme */
 }
 
 .submitBtn:hover {
-  background-color: #0077dd;
+  background-color: #10b981;
 }
 
 .listaVehiculos {
@@ -132,42 +129,42 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #0f172a;
+  background-color: #18254b;
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid #334155;
+  border: 1px solid #233568;
 }
 
 .vehiculoInfo h3 {
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #ffffff;
 }
 
 .vehiculoInfo p {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #94a3b8;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .salidaBtn {
-  background-color: #ff4500;
+  background-color: #dc2626;
   color: #ffffff;
-  font-weight: 600;
-  font-size: 0.8rem;
-  padding: 10px 20px;
-  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 8px 16px;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
 }
 
 .salidaBtn:hover {
-  background-color: #e63e00;
+  background-color: #ef4444;
 }
 
 .vacio {
   font-size: 0.875rem;
   color: #64748b;
   text-align: center;
-  padding: 20px;
+  padding: 10px;
 }

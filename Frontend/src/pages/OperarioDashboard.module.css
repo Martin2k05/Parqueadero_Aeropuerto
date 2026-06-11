@@ -16,6 +16,7 @@
 .header h1 {
   font-size: 1.5rem;
   font-weight: 700;
+  color: #ffffff;
 }
 
 .header p {
@@ -27,7 +28,7 @@
 .metricasGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 20px;
 }
 
 @media (min-width: 768px) {
@@ -39,22 +40,29 @@
 .metricaCard {
   background-color: #111a36;
   border: 1px solid #1e2d5a;
-  padding: 16px;
-  border-radius: 12px;
+  padding: 24px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
+  gap: 15px; /* Esto separa el H3 del P */
 }
 
 .metricaCard h3 {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
+  margin: 0;
+  color: #ffffff;
+  line-height: 1;
 }
 
 .metricaCard p {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: #94a3b8;
-  margin-top: 4px;
+  margin: 0;
+  text-transform: capitalize;
+  text-align: center;
 }
 
 /* --- Gráficos --- */
@@ -74,60 +82,61 @@
   background-color: #111a36;
   border: 1px solid #1e2d5a;
   padding: 24px;
-  border-radius: 12px;
-  min-height: 300px; /* Asegura espacio para el gráfico */
+  border-radius: 16px;
+  height: 350px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chartCard h3 {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #cbd5e1;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 /* --- Actividad Reciente --- */
-.actividadCard {
-  background-color: #111a36;
-  border: 1px solid #1e2d5a;
-  padding: 24px;
-  border-radius: 12px;
-}
-
-.actividadCard h3 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #cbd5e1;
-  margin-bottom: 16px;
-}
-
-.listaActividad {
+.listaActividadInterna {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: 300px;
 }
 
 .itemActividad {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #18254b;
-  padding: 16px;
+  background-color: #0f172a;
+  padding: 18px 24px;
   border-radius: 12px;
   border: 1px solid #233568;
 }
 
-.itemActividad p {
-  font-size: 0.875rem;
-  font-weight: 500;
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  display: inline-block;
+  margin-right: 12px;
+}
+
+.textoPlaca {
+  font-size: 0.95rem;
+  font-weight: 600;
   color: #fff;
 }
 
-.itemActividad span {
-  font-size: 0.75rem;
+.horaTexto {
+  font-size: 0.85rem;
   color: #94a3b8;
 }
 
-/* Clases de apoyo que ya tenías */
-.icon { font-size: 1.25rem; margin-bottom: 8px; }
-.metricaSub { font-size: 10px !important; color: #64748b !important; margin-top: 2px; }
-.loading { padding: 32px; text-align: center; color: #fff; }
+.loading { 
+  padding: 32px; 
+  text-align: center; 
+  color: #fff; 
+  font-size: 1.1rem;
+}

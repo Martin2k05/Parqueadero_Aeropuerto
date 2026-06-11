@@ -33,6 +33,7 @@ const ControlAcceso = () => {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify({ placaVehiculo: placa, tipoVehiculo: tipo })
     });
+    
     const data = await res.json();
     
     if(res.ok) {
@@ -40,6 +41,7 @@ const ControlAcceso = () => {
         setPlaca('');
         cargarVehiculos();
     } else {
+        // AQUÍ MOSTRAMOS EL ERROR DEL DUPLICADO
         toast.error(data.message || "Error al registrar ingreso");
     }
   };
@@ -53,10 +55,10 @@ const ControlAcceso = () => {
     const data = await res.json();
     
     if(res.ok) {
-        toast.success(data.message); // Aquí aparecerá el precio enviado por el backend
+        toast.success(data.message);
         cargarVehiculos();
     } else {
-        toast.error("Error al registrar salida");
+        toast.error(data.message || "Error al registrar salida");
     }
   };
 
