@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+// Importaciones de rutas (sin duplicados)
 const authRoutes = require('./src/routes/authRoutes');
 const parkingRoutes = require('./src/routes/parkingRoutes');
 const dashboardRoutes = require('./src/routes/dashboardRoutes');
@@ -9,13 +10,13 @@ const adminRoutes = require('./src/routes/adminRoutes');
 
 const app = express();
 
-// Middlewares globales de utilidad
+// Middlewares globales
 app.use(cors());
 app.use(express.json());
 
-// Declaración formal e inyección de rutas de la API
+// Declaración de rutas de la API
 app.use('/api/auth', authRoutes);
-app.use('/api/parking', parkingRoutes);
+app.use('/api/parking', parkingRoutes); // Esta línea centraliza todo el parking
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 
