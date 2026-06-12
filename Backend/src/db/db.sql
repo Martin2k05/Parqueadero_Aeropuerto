@@ -133,3 +133,20 @@ INSERT IGNORE INTO tarifas (id_usuario, tipo_vehiculo, valor_primera_hora, valor
 (1, 'Motocicleta', 2700.00, 1500.00, 18000.00, 15000.00, 67200.00),
 (1, 'Bicicleta', 700.00, 400.00, 4500.00, 4000.00, 16800.00);
 
+-- Modificación de la tabla usuarios
+ALTER TABLE usuarios 
+ADD COLUMN correo VARCHAR(150) NOT NULL UNIQUE AFTER nombre_usuario,
+ADD COLUMN contrasena VARCHAR(255) NOT NULL AFTER correo;
+
+-- Modificación de la tabla clientes
+ALTER TABLE clientes 
+ADD COLUMN identificacion VARCHAR(20) NOT NULL UNIQUE AFTER nombre_cliente,
+ADD COLUMN correo VARCHAR(150) NOT NULL UNIQUE AFTER identificacion,
+ADD COLUMN contrasena VARCHAR(255) NOT NULL AFTER correo;
+
+-- Corregir el nombre de telefono_numero a telefono para mantener limpio tu backend
+ALTER TABLE clientes CHANGE COLUMN telefono_numero telefono VARCHAR(20);
+
+ALTER TABLE control_i_s 
+ADD COLUMN id_usuario INT NOT NULL AFTER id_tarifa,
+ADD CONSTRAINT fk_control_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE RESTRICT;

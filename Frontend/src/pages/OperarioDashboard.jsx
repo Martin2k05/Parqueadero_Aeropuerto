@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import Sidebar from '../components/Sidebar';
 import styles from './OperarioDashboard.module.css';
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
 const OperarioDashboard = () => {
   const [dash, setDash] = useState(null);
   const [cargando, setCargando] = useState(true);
 
-  // Función para formatear las claves: "TotalCupos" -> "Total Cupos"
   const formatearEtiqueta = (texto) => {
     return texto
-      .replace(/([A-Z])/g, ' $1') // Inserta espacio antes de cada mayúscula
-      .replace(/^./, (str) => str.toUpperCase()) // Capitaliza la primera letra
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase())
       .trim();
   };
 
@@ -43,27 +39,16 @@ const OperarioDashboard = () => {
 
   if (cargando || !dash) return <div className={styles.loading}>Cargando centro de control...</div>;
 
-  const dataOcupacion = {
-    labels: dash.ocupacionData.map(d => `${d.hora}:00`),
-    datasets: [{ 
-      label: 'Vehículos', 
-      data: dash.ocupacionData.map(d => d.vehiculos), 
-      borderColor: '#3b82f6', 
-      tension: 0.4,
-      pointRadius: 4,
-      pointBackgroundColor: '#3b82f6'
-    }]
-  };
-
   return (
     <div className={styles.layout}>
       <Sidebar />
       <div className={styles.content}>
         <div className={styles.header}>
           <h1>Dashboard de Monitoreo</h1>
-          <p>Visualización en tiempo real de la operación</p>
+          <p>AeroParking: Inteligencia operativa en tiempo real</p>
         </div>
         
+        {/* Métricas rápidas */}
         <div className={styles.metricasGrid}>
            {dash.metricas && Object.entries(dash.metricas).map(([key, val]) => (
              <div key={key} className={styles.metricaCard}>
@@ -74,13 +59,48 @@ const OperarioDashboard = () => {
         </div>
 
         <div className={styles.chartsGrid}>
+          {/* Gráfico de Ingresos Optimizado */}
           <div className={styles.chartCard}>
-            <h3>Ocupación por Hora</h3>
-            <div style={{ flex: 1, position: 'relative', width: '100%' }}>
-              <Line data={dataOcupacion} options={{ responsive: true, maintainAspectRatio: false }} />
-            </div>
+            <h3>Flujo de Ingresos Semanal</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={dash.ingresosData.map(d => ({ ...d, total: Math.max(0, d.total) }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <XAxis 
+                  dataKey="dia" 
+                  stroke="#94a3b8" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false} 
+                />
+                <YAxis 
+                  stroke="#94a3b8" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  domain={[0, 8000]} // Escala fija para mantener estética profesional
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#0f172a', 
+                    borderColor: '#10b981', 
+                    borderRadius: '8px',
+                    color: '#fff' 
+                  }}
+                  itemStyle={{ color: '#10b981', fontWeight: 'bold' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="total" 
+                  stroke="#10b981" 
+                  strokeWidth={4} 
+                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4, stroke: '#fff' }}
+                  activeDot={{ r: 8, strokeWidth: 0 }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
           
+          {/* Actividad Reciente */}
           <div className={styles.chartCard}>
             <h3>Actividad Reciente</h3>
             <div className={styles.listaActividadInterna}>

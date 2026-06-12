@@ -9,7 +9,8 @@ const upload = multer({ dest: 'uploads/' });
 // --- REGISTRAR INGRESO ---
 exports.registrarIngreso = async (req, res) => {
   const { placaVehiculo, tipoVehiculo } = req.body;
-  const idUsuarioActivo = req.user ? req.user.id : null;
+  // Si req.user no existe, asignamos 1 (id del Admin por defecto) para cumplir el NOT NULL de la BD
+  const idUsuarioActivo = req.user ? req.user.id : 1; 
 
   try {
     const ident = placaVehiculo.toUpperCase().trim();
@@ -17,26 +18,34 @@ exports.registrarIngreso = async (req, res) => {
     // Validación de longitud según el tipo
     if (tipoVehiculo === 'Bicicleta') {
       if (ident.length < 10 || ident.length > 12) {
-          return res.status(400).json({ message: 'El ID de bicicleta debe tener entre 10 y 12 caracteres.' });
+        return res.status(400).json({ message: 'El ID de bicicleta debe tener entre 10 y 12 caracteres.' });
       }
     } else {
       if (ident.length !== 6) {
-          return res.status(400).json({ message: 'La placa debe tener 6 caracteres.' });
+        return res.status(400).json({ message: 'La placa debe tener 6 caracteres.' });
       }
     }
 
-    // Validación de duplicados
+    // Validación de duplicados (vehículo ya adentro)
     const [duplicados] = await db.query(
-        'SELECT id_control_i_s FROM control_i_s WHERE placa_vehiculo = ? AND hora_salida IS NULL',
-        [ident]
+      'SELECT id_control_i_s FROM control_i_s WHERE placa_vehiculo = ? AND hora_salida IS NULL',
+      [ident]
     );
 
     if (duplicados.length > 0) {
-        return res.status(400).json({ message: 'Error: Este vehículo ya se encuentra dentro.' });
+      return res.status(400).json({ message: 'Error: Este vehículo ya se encuentra dentro.' });
     }
 
+    // 1. SOLUCIÓN AL ERROR DE CONSTRAINT: Asegurar la existencia del vehículo en su tabla maestra
     await db.query(
-      'INSERT INTO control_i_s (placa_vehiculo, id_tarifa, id_usuario, hora_ingreso, fecha_ingreso) VALUES (?, (SELECT id_tarifa FROM tarifas WHERE tipo_vehiculo = ? LIMIT 1), ?, NOW(), CURDATE())',
+      'INSERT IGNORE INTO vehiculos (placa_vehiculo) VALUES (?)',
+      [ident]
+    );
+
+    // 2. Registrar el ingreso en control_i_s con el id_usuario agregado en tu BD
+    await db.query(
+      `INSERT INTO control_i_s (placa_vehiculo, id_tarifa, id_usuario, hora_ingreso, fecha_ingreso) 
+       VALUES (?, (SELECT id_tarifa FROM tarifas WHERE tipo_vehiculo = ? LIMIT 1), ?, NOW(), CURDATE())`,
       [ident, tipoVehiculo, idUsuarioActivo]
     );
     
@@ -49,31 +58,31 @@ exports.registrarIngreso = async (req, res) => {
 
 // --- RECONOCIMIENTO DE PLACAS (ALPR) ---
 exports.leerPlaca = [upload.single('foto'), async (req, res) => {
-    if (!req.file) return res.status(400).json({ message: "No se recibió archivo" });
+  if (!req.file) return res.status(400).json({ message: "No se recibió archivo" });
 
-    try {
-        const formData = new FormData();
-        formData.append('upload', fs.createReadStream(req.file.path));
+  try {
+    const formData = new FormData();
+    formData.append('upload', fs.createReadStream(req.file.path));
 
-        const response = await axios.post('https://api.platerecognizer.com/v1/plate-reader/', formData, {
-            headers: { 
-                'Authorization': 'Token TU_TOKEN_DE_API',
-                ...formData.getHeaders() 
-            }
-        });
+    const response = await axios.post('https://api.platerecognizer.com/v1/plate-reader/', formData, {
+      headers: { 
+        'Authorization': 'Token TU_TOKEN_DE_API',
+        ...formData.getHeaders() 
+      }
+    });
 
-        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
-        if (response.data.results && response.data.results.length > 0) {
-            res.json({ placa: response.data.results[0].plate.toUpperCase() });
-        } else {
-            res.status(404).json({ message: "No se detectó ninguna placa." });
-        }
-    } catch (error) {
-        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        console.error("Error API ALPR:", error.response?.data || error.message);
-        res.status(500).json({ message: "Error al procesar la imagen con la IA" });
+    if (response.data.results && response.data.results.length > 0) {
+      res.json({ placa: response.data.results[0].plate.toUpperCase() });
+    } else {
+      res.status(404).json({ message: "No se detectó ninguna placa." });
     }
+  } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    console.error("Error API ALPR:", error.response?.data || error.message);
+    res.status(500).json({ message: "Error al procesar la imagen con la IA" });
+  }
 }];
 
 // --- REGISTRAR SALIDA ---
@@ -93,11 +102,11 @@ exports.registrarSalida = async (req, res) => {
     
     // Cálculo de tarifas
     if (v.tipo_vehiculo === 'Bicicleta') {
-        total = 700;
+      total = 700;
     } else if (v.tipo_vehiculo === 'Motocicleta') {
-        total = v.minutos <= 60 ? 2700 : 2700 + (Math.ceil((v.minutos - 60) / 60) * 1500);
+      total = v.minutos <= 60 ? 2700 : 2700 + (Math.ceil((v.minutos - 60) / 60) * 1500);
     } else {
-        total = v.minutos <= 60 ? 4300 : 4300 + (Math.ceil((v.minutos - 60) / 60) * 2600);
+      total = v.minutos <= 60 ? 4300 : 4300 + (Math.ceil((v.minutos - 60) / 60) * 2600);
     }
 
     await db.query(

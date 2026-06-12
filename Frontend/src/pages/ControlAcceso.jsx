@@ -133,7 +133,7 @@ const ControlAcceso = () => {
                 <option value="Bicicleta">Bicicleta</option>
               </select>
             </div>
-            <button type="button" onClick={abrirCamara} className={styles.cameraBtn}>📸 Escanear Automático</button>
+            <button type="button" onClick={abrirCamara} className={styles.cameraBtn}> Escaneo Automático</button>
             <button type="submit" className={styles.submitBtn}>Registrar</button>
           </form>
         </div>
@@ -141,7 +141,7 @@ const ControlAcceso = () => {
         {camaraAbierta && (
           <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
-              <p style={{color: 'white', textAlign: 'center'}}>⏳ Escaneando placa automáticamente...</p>
+              <p style={{color: 'white', textAlign: 'center'}}> Escaneando placa automáticamente...</p>
               <video ref={videoRef} autoPlay playsInline style={{width: '100%', borderRadius: '10px'}} />
               <button onClick={() => { videoRef.current.srcObject.getTracks().forEach(t => t.stop()); setCamaraAbierta(false); }} className={styles.salidaBtn} style={{marginTop: '15px'}}>Cancelar Escaneo</button>
             </div>
