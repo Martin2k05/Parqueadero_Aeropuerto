@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS roles (
 CREATE TABLE IF NOT EXISTS usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre_usuario VARCHAR(150) NOT NULL,
+    correo VARCHAR(150) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL,
     id_rol INT NOT NULL,
     FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE RESTRICT
 );

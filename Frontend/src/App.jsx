@@ -8,14 +8,15 @@ import OperarioDashboard from './pages/OperarioDashboard';
 import ControlAcceso from './pages/ControlAcceso';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// Importación de las nuevas páginas reales del cliente
+// Importación de las páginas del cliente
 import MiPlan from './pages/MiPlan';
 import MiPerfil from './pages/MiPerfil';
 
-// Páginas de ejemplo para el Administrador
-const Clientes = () => <div style={{ padding: '20px', color: 'white' }}><h2>Gestión de Clientes</h2></div>;
-const Reportes = () => <div style={{ padding: '20px', color: 'white' }}><h2>Reportes y Estadísticas</h2></div>;
-const Tarifas = () => <div style={{ padding: '20px', color: 'white' }}><h2>Configuración de Tarifas</h2></div>;
+// Importación de las páginas reales del Administrador
+import AdminDashboard from './pages/admin/AdminDashboard';
+import GestionClientes from './pages/admin/GestionClientes';
+import Reportes from './pages/admin/Reportes';
+import GestionTarifas from './pages/admin/GestionTarifas';
 
 function App() {
   return (
@@ -58,19 +59,24 @@ function App() {
         } />
 
         {/* Rutas exclusivas de Administradores */}
-        <Route path="/clientes" element={
+        <Route path="/admin/dashboard" element={
           <ProtectedRoute rolesPermitidos={['Admin']}>
-            <Clientes />
+            <AdminDashboard />
           </ProtectedRoute>
         } />
-        <Route path="/reportes" element={
+        <Route path="/admin/clientes" element={
+          <ProtectedRoute rolesPermitidos={['Admin']}>
+            <GestionClientes />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/reportes" element={
           <ProtectedRoute rolesPermitidos={['Admin']}>
             <Reportes />
           </ProtectedRoute>
         } />
-        <Route path="/tarifas" element={
+        <Route path="/admin/tarifas" element={
           <ProtectedRoute rolesPermitidos={['Admin']}>
-            <Tarifas />
+            <GestionTarifas />
           </ProtectedRoute>
         } />
 

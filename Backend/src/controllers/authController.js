@@ -65,6 +65,7 @@ exports.login = async (req, res) => {
     }
 
     // Validar contraseña
+    // ... justo después de encontrar el usuario y antes de bcrypt ...
     const hashContrasena = usuarioEncontrado.contrasena;
     const passwordCorrect = await bcrypt.compare(contrasena, hashContrasena);
     
@@ -181,22 +182,66 @@ exports.obtenerPerfil = async (req, res) => {
 // CONTROLADOR INTEGRADO DE ACTUALIZACIÓN (PUT)
 // ==========================================
 exports.actualizarPerfil = async (req, res) => {
-  const idCliente = req.user.id;
-  const { correo, telefono, dir_calle, dir_carrera, dir_numero, dir_barrio } = req.body;
+  const idUsuario = req.user.id;
+  const rolUsuario = req.user.rol;
+  const { correo, telefono, dir_calle, dir_carrera, dir_numero, dir_barrio, nombre, nombreCompleto, nombre_cliente, placa, placa_vehiculo } = req.body;
 
   if (!correo) {
     return res.status(400).json({ message: 'El correo electrónico es obligatorio.' });
   }
 
   try {
-    await db.query(
-      `UPDATE clientes SET correo = ?, telefono = ?, dir_barrio = ?, dir_calle = ?, dir_carrera = ?, dir_numero = ? WHERE id_cliente = ?`,
-      [correo, telefono, dir_barrio, dir_calle, dir_carrera, dir_numero, idCliente]
-    );
-    return res.json({ message: 'Información de contacto actualizada con éxito.' });
+    let queryCheck = '';
+    let paramsCheck = [];
+
+    if (rolUsuario === 'Cliente') {
+      queryCheck = 'SELECT correo FROM clientes WHERE correo = ? AND id_cliente != ? UNION SELECT correo FROM usuarios WHERE correo = ?';
+      paramsCheck = [correo, idUsuario, correo];
+    } else {
+      queryCheck = 'SELECT correo FROM usuarios WHERE correo = ? AND id_usuario != ? UNION SELECT correo FROM clientes WHERE correo = ?';
+      paramsCheck = [correo, idUsuario, correo];
+    }
+
+    const [existCheck] = await db.query(queryCheck, paramsCheck);
+    if (existCheck.length > 0) {
+      return res.status(400).json({ message: 'El correo electrónico ya está en uso por otro usuario.' });
+    }
+
+    if (rolUsuario === 'Cliente') {
+      await db.query(
+        `UPDATE clientes SET 
+          correo = ?, 
+          telefono = ?, 
+          dir_barrio = IFNULL(?, dir_barrio), 
+          dir_calle = IFNULL(?, dir_calle), 
+          dir_carrera = IFNULL(?, dir_carrera), 
+          dir_numero = IFNULL(?, dir_numero),
+          nombre_cliente = IFNULL(?, nombre_cliente),
+          placa_vehiculo = IFNULL(?, placa_vehiculo)
+         WHERE id_cliente = ?`,
+        [
+          correo,
+          telefono || null,
+          dir_barrio || null,
+          dir_calle || null,
+          dir_carrera || null,
+          dir_numero || null,
+          nombre || nombreCompleto || nombre_cliente || null,
+          placa || placa_vehiculo || null,
+          idUsuario
+        ]
+      );
+    } else {
+      await db.query(
+        `UPDATE usuarios SET correo = ?, nombre_usuario = IFNULL(?, nombre_usuario) WHERE id_usuario = ?`,
+        [correo, nombre || nombreCompleto || null, idUsuario]
+      );
+    }
+
+    return res.json({ message: 'Información de perfil actualizada con éxito.' });
   } catch (error) {
-    console.error('Error al actualizar perfil de cliente:', error);
-    return res.status(500).json({ message: 'Error interno en el servidor al guardar cambios.' });
+    console.error('❌ ERROR AL ACTUALIZAR PERFIL:', error);
+    return res.status(500).json({ message: 'Error interno en el servidor al guardar cambios.', detail: error.message });
   }
 };
 

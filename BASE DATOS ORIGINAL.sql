@@ -52,21 +52,21 @@ CREATE TABLE IF NOT EXISTS historial_tarifas (
     id_tarifa INT NOT NULL,
     id_usuario INT NOT NULL, -- Empleado que hizo la modificación
     tipo_vehiculo VARCHAR(50) NOT NULL,
-   
+    
     -- Valores anteriores
     ant_primera_hora DECIMAL(10,2),
     ant_hora_2_a_12 DECIMAL(10,2),
     ant_hora_13_a_168 DECIMAL(10,2),
     ant_hora_169_mas DECIMAL(10,2),
     ant_mensualidad DECIMAL(10,2),
-   
+    
     -- Valores nuevos
     nue_primera_hora DECIMAL(10,2),
     nue_hora_2_a_12 DECIMAL(10,2),
     nue_hora_13_a_168 DECIMAL(10,2),
     nue_hora_169_mas DECIMAL(10,2),
     nue_mensualidad DECIMAL(10,2),
-   
+    
     fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_tarifa) REFERENCES tarifas(id_tarifa) ON DELETE CASCADE,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE RESTRICT
@@ -140,10 +140,6 @@ INSERT IGNORE INTO roles (id_rol, nombre_rol) VALUES
 (1, 'Admin'),
 (2, 'Operario');
 
--- Insertar Usuario Administrador Base
-INSERT IGNORE INTO usuarios (id_usuario, nombre_usuario, id_rol) VALUES
-(1, 'Admin General Alfonso Bonilla', 1);
-
 -- Insertar Tarifas Oficiales por Bloques
 INSERT IGNORE INTO tarifas (id_usuario, tipo_vehiculo, valor_primera_hora, valor_hora_2_a_12, valor_hora_13_a_168, valor_hora_169_mas, valor_mensualidad) VALUES
 (1, 'Automovil', 4300.00, 2600.00, 35500.00, 31200.00, 178900.00),
@@ -153,3 +149,16 @@ INSERT IGNORE INTO tarifas (id_usuario, tipo_vehiculo, valor_primera_hora, valor
 (1, 'Motocarro', 4300.00, 2600.00, 35500.00, 31200.00, 178900.00),
 (1, 'Motocicleta', 2700.00, 1500.00, 18000.00, 15000.00, 67200.00),
 (1, 'Bicicleta', 700.00, 400.00, 4500.00, 4000.00, 16800.00);
+
+-- =====================================================================
+-- INSERCIÓN DIRECTA DEL ADMINISTRADOR EN LA BASE DE DATOS
+-- Contraseña en texto plano: admin123
+-- =====================================================================
+
+INSERT INTO usuarios (nombre_usuario, correo, contrasena, id_rol) 
+VALUES (
+  'Carlos Admin', 
+  'admin@aeroparking.com', 
+  '$2a$10$MemPAPRv898Sc80/mtu2uOaCdNUN6SpXH0GFerviPkfd.mKzHpWiC', 
+  1
+);

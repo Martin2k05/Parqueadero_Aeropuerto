@@ -26,7 +26,10 @@ const Login = () => {
         description: `Bienvenido de nuevo, ${data.user.nombre}.`
       });
 
-      if (data.user.rol === 'Cliente') {
+      // Redirección condicional según el rol detectado
+      if (data.user.rol === 'Admin') {
+        navigate('/admin/dashboard');
+      } else if (data.user.rol === 'Cliente') {
         navigate('/dashboard-cliente');
       } else {
         navigate('/dashboard-monitoreo');

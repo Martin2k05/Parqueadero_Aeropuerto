@@ -99,7 +99,7 @@ exports.getClienteDashboard = async (req, res) => {
 exports.getPerfilCliente = async (req, res) => {
   const idCliente = req.user.id;
   try {
-    // 🕵️‍♂️ CORREGIDO: Añadimos teléfono y todos los campos desglosados de la dirección al SELECT
+    // 🕵️‍♂️ CORREGIDO: Añadimos 'placa_vehiculo' al SELECT de la tabla clientes
     const [data] = await db.query(
       `SELECT 
         id_cliente, 
@@ -110,24 +110,35 @@ exports.getPerfilCliente = async (req, res) => {
         dir_calle, 
         dir_carrera, 
         dir_numero, 
-        dir_barrio 
+        dir_barrio,
+        placa_vehiculo
        FROM clientes WHERE id_cliente = ?`, 
       [idCliente]
     );
     
-    // Si el cliente no tiene mensualidades, buscamos la placa nativa con la que se registró
+    if (data.length === 0) return res.status(404).json({ message: 'Cliente no encontrado' });
+    const cliente = data[0];
+
+    // Buscamos si de pronto tiene una placa registrada en mensualidades
     const [vehiculos] = await db.query(
       'SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1', 
       [idCliente]
     );
     
-    if (data.length === 0) return res.status(404).json({ message: 'Cliente no encontrado' });
+    // Evaluamos de forma segura cuál placa usar y limpiamos valores nulos
+    let placaFinal = 'Sin Placa';
+    
+    if (vehiculos.length > 0 && vehiculos[0].placa_vehiculo) {
+      placaFinal = vehiculos[0].placa_vehiculo.toString().trim();
+    } else if (cliente.placa_vehiculo) {
+      placaFinal = cliente.placa_vehiculo.toString().trim();
+    }
 
-    const cliente = data[0];
-    // Si no tiene mensualidad activa, saca la placa con la que se registró originalmente
-    const placaFinal = vehiculos.length > 0 ? vehiculos[0].placa_vehiculo : (cliente.placa_vehiculo || 'Sin Placa');
-
-    // 🚀 CORREGIDO: Enviamos el JSON mapeado con los nombres exactos que tu Front espera recibir
+    if (placaFinal === 'NULL' || placaFinal === 'null' || placaFinal === '') {
+      placaFinal = 'Sin Placa';
+    }
+    
+    // 🚀 ENVIAMOS EL JSON COMPLETO AL FRONTEND
     res.json({
       nombre_cliente: cliente.nombre_cliente,
       correo: cliente.correo,
