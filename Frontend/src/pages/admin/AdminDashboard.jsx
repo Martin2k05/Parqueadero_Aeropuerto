@@ -3,11 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import styles from '../Styles/OperarioDashboard.module.css';
+import { 
+  TrendingUp, 
+  Car, 
+  CheckCircle, 
+  Users, 
+  Clock, 
+  DollarSign, 
+  Bike
+} from 'lucide-react';
+import Sidebar from '../../components/Sidebar'; // <-- AQUÍ: Importación limpia subiendo dos niveles
+import styles from '../Styles/AdminDashboard.module.css';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [usuarioActivo, setUsuarioActivo] = useState({});
   const [metricas, setMetricas] = useState({
     totalCupos: 100,
     ocupados: 0,
@@ -40,10 +49,10 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || user.rol !== 'Admin') {
+    // Validación flexible para admitir ambos formatos de rol administrador
+    if (!user || (user.rol !== 'Admin' && user.rol !== 'Administrador')) {
       navigate('/login');
     } else {
-      setUsuarioActivo(user);
       cargarDatosDashboard();
     }
   }, [navigate]);
@@ -62,11 +71,6 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error al cargar métricas en tiempo real:', error);
     }
-  };
-
-  const cerrarSesion = () => {
-    localStorage.clear();
-    navigate('/login');
   };
 
   return (
@@ -88,38 +92,8 @@ const AdminDashboard = () => {
         `}
       </style>
 
-      {/* SIDEBAR */}
-      <aside className={styles.sidebar}>
-        <div className={styles.logoContainer}>
-          <h2>AeroParking</h2>
-          <p>Sistema Inteligente</p>
-        </div>
-        
-        <div className={styles.userInfo}>
-          <p className={styles.userLabel}>Usuario activo</p>
-          <p className={styles.userName}>{usuarioActivo.nombre || 'Carlos Admin'}</p>
-          <p className={styles.userRole}>{usuarioActivo.rol || 'Administrador'}</p>
-        </div>
-
-        <nav className={styles.navMenu}>
-          <button className={`${styles.navButton} ${styles.active}`} onClick={() => navigate('/admin/dashboard')}>
-            Dashboard
-          </button>
-          <button className={styles.navButton} onClick={() => navigate('/admin/clientes')}>
-            Clientes
-          </button>
-          <button className={styles.navButton} onClick={() => navigate('/admin/reportes')}>
-            Reportes
-          </button>
-          <button className={styles.navButton} onClick={() => navigate('/admin/tarifas')}>
-            Tarifas
-          </button>
-        </nav>
-
-        <button className={styles.logoutButton} onClick={cerrarSesion}>
-          Cerrar Sesión
-        </button>
-      </aside>
+      {/* LLAMADA A LA SIDEBAR DE COMPONENTES */}
+      <Sidebar />
 
       {/* CONTENIDO PRINCIPAL */}
       <main className={styles.mainContent}>
@@ -131,109 +105,124 @@ const AdminDashboard = () => {
         {/* TARJETAS DE MÉTRICAS */}
         <section className={styles.metricsGrid}>
           <div className={`${styles.metricCard} animate-card-1`}>
-            <div className={styles.metricIcon}>📈</div>
+            <div className={`${styles.metricIcon} ${styles.bgBlue}`}>
+              <TrendingUp size={22} />
+            </div>
             <div className={styles.metricData}>
               <h3>{metricas.totalCupos}</h3>
-              <p>Total Cupos</p>
+              <p className={styles.label}>Total Cupos</p>
             </div>
           </div>
+          
           <div className={`${styles.metricCard} animate-card-2`}>
-            <div className={styles.metricIcon}>🚗</div>
+            <div className={`${styles.metricIcon} ${styles.bgPink}`}>
+              <Car size={22} />
+            </div>
             <div className={styles.metricData}>
               <h3>{metricas.ocupados}</h3>
-              <p>Ocupados</p>
+              <p className={styles.label}>Ocupados</p>
             </div>
           </div>
+
           <div className={`${styles.metricCard} animate-card-3`}>
-            <div className={styles.metricIcon}>✅</div>
+            <div className={`${styles.metricIcon} ${styles.bgGreen}`}>
+              <CheckCircle size={22} />
+            </div>
             <div className={styles.metricData}>
               <h3>{metricas.disponibles}</h3>
-              <p>Disponibles</p>
+              <p className={styles.label}>Disponibles</p>
             </div>
           </div>
+
           <div className={`${styles.metricCard} animate-card-4`}>
-            <div className={styles.metricIcon}>🚙</div>
+            <div className={`${styles.metricIcon} ${styles.bgBlue}`}>
+              <DollarSign size={22} />
+            </div>
             <div className={styles.metricData}>
               <h3>{metricas.ingresosHoy}</h3>
-              <p>Ingresos Hoy</p>
+              <p className={styles.label}>Ingresos Hoy</p>
             </div>
           </div>
+
           <div className={`${styles.metricCard} animate-card-5`}>
-            <div className={styles.metricIcon}>👥</div>
+            <div className={`${styles.metricIcon} ${styles.bgPink}`}>
+              <Users size={22} />
+            </div>
             <div className={styles.metricData}>
               <h3>{metricas.clientesActivos}</h3>
-              <p>Clientes Activos</p>
+              <p className={styles.label}>Clientes Activos</p>
             </div>
           </div>
+
           <div className={`${styles.metricCard} animate-card-6`}>
-            <div className={styles.metricIcon}>⏰</div>
+            <div className={`${styles.metricIcon} ${styles.bgGreen}`}>
+              <Clock size={22} />
+            </div>
             <div className={styles.metricData}>
               <h3>{metricas.planesPorVencer}</h3>
-              <p>Planes por Vencer</p>
+              <p className={styles.label}>Planes por Vencer</p>
             </div>
           </div>
         </section>
 
         {/* GRÁFICOS */}
-        <section className={styles.chartsGrid} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '30px' }}>
-          
-          <div className="animate-chart" style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ marginBottom: '20px', fontSize: '16px', color: '#333' }}>Ocupación por Hora</h3>
+        <section className={styles.chartsGrid}>
+          <div className="animate-chart">
+            <h3>Ocupación por Hora</h3>
             <div style={{ width: '100%', height: '300px' }}>
               <ResponsiveContainer>
                 <LineChart data={datosOcupacion} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-                  <XAxis dataKey="hora" tick={{ fill: '#888', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: '#888', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2a3454" />
+                  <XAxis dataKey="hora" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1c2541', borderRadius: '8px', border: '1px solid #2a3454', color: '#fff' }} />
                   <Line type="monotone" dataKey="ocupacion" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} animationDuration={1500} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="animate-chart" style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ marginBottom: '20px', fontSize: '16px', color: '#333' }}>Ingresos Semanales (COP)</h3>
+          <div className="animate-chart">
+            <h3>Ingresos Semanales (COP)</h3>
             <div style={{ width: '100%', height: '300px' }}>
               <ResponsiveContainer>
                 <BarChart data={datosIngresos} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-                  <XAxis dataKey="dia" tick={{ fill: '#888', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: '#888', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${value/1000}k`} />
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} formatter={(value) => [`$${value.toLocaleString()}`, 'Ingresos']} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2a3454" />
+                  <XAxis dataKey="dia" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${value/1000}k`} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1c2541', borderRadius: '8px', border: '1px solid #2a3454', color: '#fff' }} formatter={(value) => [`$${value.toLocaleString()}`, 'Ingresos']} />
                   <Bar dataKey="ingresos" fill="#10b981" radius={[4, 4, 0, 0]} animationDuration={1500} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
-
         </section>
 
         {/* ACTIVIDAD RECIENTE DINÁMICA */}
-        <section className={`${styles.recentActivity} animate-activity`} style={{ marginTop: '30px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ marginBottom: '20px', fontSize: '16px', color: '#333' }}>Actividad Reciente</h3>
-          <div className={styles.activityList} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            
+        <section className={`${styles.recentActivity} animate-activity`}>
+          <h3>Actividad Reciente</h3>
+          <div className={styles.activityList}>
             {actividad.map((act, index) => (
-              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px solid #f3f4f6' }}>
+              <div key={index} className={styles.activityItem}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                  <div style={{ fontSize: '20px', backgroundColor: '#e0f2fe', padding: '10px', borderRadius: '50%' }}>
-                    {act.placa_vehiculo.includes('M') ? '🏍️' : '🚗'}
+                  <div className={styles.activityIconBox}>
+                    {act.placa_vehiculo.includes('M') ? <Bike size={20} /> : <Car size={20} />}
                   </div>
                   <div>
-                    <p style={{ margin: 0, color: '#333' }}>Placa: <strong>{act.placa_vehiculo}</strong></p>
-                    <span style={{ fontSize: '12px', color: '#888' }}>
+                    <p style={{ margin: 0, color: '#ffffff' }}>Placa: <strong>{act.placa_vehiculo}</strong></p>
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>
                       {new Date(act.hora_ingreso).toLocaleString()}
                     </span>
                   </div>
                 </div>
                 <div style={{ 
-                  backgroundColor: act.hora_salida ? '#f3f4f6' : '#dcfce7', 
-                  color: act.hora_salida ? '#6b7280' : '#166534', 
-                  padding: '4px 10px', 
+                  backgroundColor: act.hora_salida ? 'rgba(75, 85, 99, 0.2)' : 'rgba(16, 185, 129, 0.2)', 
+                  color: act.hora_salida ? '#9ca3af' : '#10b981', 
+                  padding: '4px 12px', 
                   borderRadius: '12px', 
                   fontSize: '12px', 
-                  fontWeight: 'bold' 
+                  fontWeight: 'bold',
+                  border: act.hora_salida ? '1px solid rgba(75, 85, 99, 0.4)' : '1px solid rgba(16, 185, 129, 0.4)'
                 }}>
                   {act.hora_salida ? 'Salió' : 'Dentro'}
                 </div>
@@ -241,9 +230,8 @@ const AdminDashboard = () => {
             ))}
 
             {actividad.length === 0 && (
-              <p style={{ textAlign: 'center', color: '#888' }}>No hay actividad de vehículos registrada hoy.</p>
+              <p style={{ textAlign: 'center', color: '#64748b' }}>No hay actividad de vehículos registrada hoy.</p>
             )}
-
           </div>
         </section>
       </main>

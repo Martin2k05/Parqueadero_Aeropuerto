@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Users, FileText, DollarSign, ShieldAlert, LogOut } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
 const Sidebar = () => {
@@ -7,13 +8,16 @@ const Sidebar = () => {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem('user')) || { nombre: 'Usuario', rol: 'Cliente' };
 
+  // Helper para validar si el usuario posee privilegios de administrador de forma flexible
+  const isAdmin = user.rol === 'Admin' || user.rol === 'Administrador';
+
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
   };
 
   const getBadgeClass = () => {
-    if (user.rol === 'Admin') return styles.badgeAdmin;
+    if (isAdmin) return styles.badgeAdmin;
     if (user.rol === 'Operario') return styles.badgeOperario;
     return styles.badgeCliente;
   };
@@ -40,10 +44,11 @@ const Sidebar = () => {
         </div>
 
         <nav className={styles.menu}>
+          {/* VISTAS EXCLUSIVAS DE CLIENTES */}
           {user.rol === 'Cliente' && (
             <>
               <button onClick={() => navigate('/dashboard-cliente')} className={location.pathname === '/dashboard-cliente' ? styles.menuBtnActive : styles.menuBtn}>
-                Dashboard
+                <LayoutDashboard size={18} /> Dashboard
               </button>
               <button onClick={() => navigate('/mi-plan')} className={location.pathname === '/mi-plan' ? styles.menuBtnActive : styles.menuBtn}>
                 Mi Plan
@@ -54,27 +59,31 @@ const Sidebar = () => {
             </>
           )}
 
-          {(user.rol === 'Operario' || user.rol === 'Admin') && (
+          {/* VISTAS ACCESIBLES POR OPERARIO O ADMINISTRADOR */}
+          {(user.rol === 'Operario' || isAdmin) && (
             <>
-              <button onClick={() => navigate('/dashboard-monitoreo')} className={location.pathname === '/dashboard-monitoreo' ? styles.menuBtnActive : styles.menuBtn}>
-                Dashboard
+              {/* Cambiado a la ruta real que maneja tu enrutador de administración */}
+              <button onClick={() => navigate('/admin/dashboard')} className={location.pathname === '/admin/dashboard' ? styles.menuBtnActive : styles.menuBtn}>
+                <LayoutDashboard size={18} /> Dashboard
               </button>
               <button onClick={() => navigate('/control-acceso')} className={location.pathname === '/control-acceso' ? styles.menuBtnActive : styles.menuBtn}>
-                Control de Acceso
+                <ShieldAlert size={18} /> Control de Acceso
               </button>
             </>
           )}
 
-          {user.rol === 'Admin' && (
+          {/* CONTROL EXCLUSIVO DEL ADMINISTRADOR */}
+          {isAdmin && (
             <>
-              <button onClick={() => navigate('/clientes')} className={location.pathname === '/clientes' ? styles.menuBtnActive : styles.menuBtn}>
-                Clientes
+              {/* Ajustado con el prefijo /admin/ para que coincida con tus páginas del frontend */}
+              <button onClick={() => navigate('/admin/clientes')} className={location.pathname === '/admin/clientes' ? styles.menuBtnActive : styles.menuBtn}>
+                <Users size={18} /> Clientes
               </button>
-              <button onClick={() => navigate('/reportes')} className={location.pathname === '/reportes' ? styles.menuBtnActive : styles.menuBtn}>
-                Reportes
+              <button onClick={() => navigate('/admin/reportes')} className={location.pathname === '/admin/reportes' ? styles.menuBtnActive : styles.menuBtn}>
+                <FileText size={18} /> Reportes
               </button>
-              <button onClick={() => navigate('/tarifas')} className={location.pathname === '/tarifas' ? styles.menuBtnActive : styles.menuBtn}>
-                Tarifas
+              <button onClick={() => navigate('/admin/tarifas')} className={location.pathname === '/admin/tarifas' ? styles.menuBtnActive : styles.menuBtn}>
+                <DollarSign size={18} /> Tarifas
               </button>
             </>
           )}
@@ -82,7 +91,7 @@ const Sidebar = () => {
       </div>
 
       <button onClick={handleLogout} className={styles.logoutBtn}>
-        Cerrar Sesión
+        <LogOut size={18} /> Cerrar Sesión
       </button>
     </div>
   );

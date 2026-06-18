@@ -1,139 +1,238 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from '../Styles/OperarioDashboard.module.css';
+import { Download, BarChart3, TrendingUp, Users, Car } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import Sidebar from '../../components/Sidebar';
+import styles from '../Styles/Reportes.module.css';
 
 const Reportes = () => {
   const navigate = useNavigate();
-  const [reportes, setReportes] = useState([]);
-  const [usuarioActivo, setUsuarioActivo] = useState({});
-  const [tipoReporte, setTipoReporte] = useState('Financiero');
-  const [periodoReporte, setPeriodoReporte] = useState('Diario');
+  const [metricas, setMetricas] = useState({
+    totalCupos: 100,
+    ocupados: 0,
+    disponibles: 100,
+    ingresosHoy: 0,
+    clientesActivos: 0,
+    planesPorVencer: 0
+  });
+  const [actividadReciente, setActividadReciente] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 1. Datos reales/simulados para la gráfica de barras de Ingresos (puedes adaptarlo luego con otra consulta de caja)
+  const datosIngresos = [
+    { name: 'Lun', ingresos: 1200000 },
+    { name: 'Mar', ingresos: 1550000 },
+    { name: 'Mié', ingresos: 1400000 },
+    { name: 'Jue', ingresos: 1700000 },
+    { name: 'Vie', ingresos: 2100000 },
+    { name: 'Sáb', ingresos: 1900000 },
+    { name: 'Dom', ingresos: 1500000 },
+  ];
+
+  // 2. Cálculo dinámico de la gráfica de Torta basado en los vehículos OCUPADOS reales de la DB
+  const calcularDistribucionVehiculos = () => {
+    if (metricas.ocupados === 0) {
+      return [
+        { name: 'Automóviles', value: 0, color: '#3b82f6' },
+        { name: 'Motocicletas', value: 0, color: '#06b6d4' },
+        { name: 'Bicicletas', value: 0, color: '#a855f7' },
+      ];
+    }
+    
+    // Cuenta cuántos autos y motos hay en la actividad reciente que sigan "Dentro" (hora_salida === null)
+    const autos = actividadReciente.filter(v => !v.hora_salida && v.tipo_vehiculo?.toLowerCase() !== 'motocicleta').length;
+    const motos = actividadReciente.filter(v => !v.hora_salida && v.tipo_vehiculo?.toLowerCase() === 'motocicleta').length;
+    const total = autos + motos || 1;
+
+    return [
+      { name: 'Automóviles', value: Math.round((autos / total) * 100), color: '#3b82f6' },
+      { name: 'Motocicletas', value: Math.round((motos / total) * 100), color: '#06b6d4' },
+      { name: 'Bicicletas', value: 0, color: '#a855f7' },
+    ];
+  };
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || user.rol !== 'Administrador') {
+    if (!user || (user.rol !== 'Admin' && user.rol !== 'Administrador')) {
       navigate('/login');
     } else {
-      setUsuarioActivo(user);
-      cargarReportes();
+      cargarDataRealDashboard();
     }
   }, [navigate]);
 
-  const cargarReportes = async () => {
+  // Petición HTTP real al endpoint de métricas de administración
+  const cargarDataRealDashboard = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
-      const respuesta = await fetch('http://localhost:5000/api/admin/reportes', {
+      const respuesta = await fetch('http://localhost:5000/api/admin/dashboard/metricas', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const datos = await respuesta.json();
+      
       if (respuesta.ok) {
-        setReportes(datos);
+        if (datos.metricas) setMetricas(datos.metricas);
+        if (Array.isArray(datos.actividadReciente)) setActividadReciente(datos.actividadReciente);
       }
     } catch (error) {
-      console.error('Error al cargar reportes:', error);
+      console.error('Error al conectar con las métricas reales:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const generarNuevoReporte = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      const respuesta = await fetch('http://localhost:5000/api/admin/reportes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          tipo_reporte: tipoReporte,
-          periodo_reporte: periodoReporte
-        })
-      });
-
-      if (respuesta.ok) {
-        cargarReportes();
-      }
-    } catch (error) {
-      console.error('Error al generar reporte:', error);
-    }
+  const handleExportarPDF = () => {
+    alert('Generando archivo PDF con el reporte estadístico real...');
   };
+
+  // Formateador de moneda colombiana para los ingresos reales
+  const formatCOP = (valor) => {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);
+  };
+
+  const datosVehiculos = calcularDistribucionVehiculos();
 
   return (
     <div className={styles.dashboardContainer}>
-      <aside className={styles.sidebar}>
-        <div className={styles.logoContainer}>
-          <h2>AeroParking</h2>
-          <p>Sistema Inteligente</p>
-        </div>
-        <div className={styles.userInfo}>
-          <p className={styles.userLabel}>Usuario activo</p>
-          <p className={styles.userName}>{usuarioActivo.nombre || 'Carlos Admin'}</p>
-          <p className={styles.userRole}>{usuarioActivo.rol || 'Administrador'}</p>
-        </div>
-        <nav className={styles.navMenu}>
-          <button className={styles.navButton} onClick={() => navigate('/admin/dashboard')}>Dashboard</button>
-          <button className={styles.navButton} onClick={() => navigate('/admin/clientes')}>Clientes</button>
-          <button className={`${styles.navButton} ${styles.active}`} onClick={() => navigate('/admin/reportes')}>Reportes</button>
-          <button className={styles.navButton} onClick={() => navigate('/admin/tarifas')}>Tarifas</button>
-        </nav>
-        <button className={styles.logoutButton} onClick={() => { localStorage.clear(); navigate('/login'); }}>Cerrar Sesión</button>
-      </aside>
+      <Sidebar />
 
       <main className={styles.mainContent}>
         <header className={styles.header}>
-          <h1>Módulo de Reportes</h1>
-          <p>Genera e inspecciona el historial de reportes estadísticos y financieros</p>
+          <div>
+            <h1>Reportes y Analítica</h1>
+            <p>Estadísticas y análisis del parqueadero en tiempo real</p>
+          </div>
+          <button onClick={handleExportarPDF} className={styles.btnExportar}>
+            <Download size={18} /> Exportar PDF
+          </button>
         </header>
 
-        <section style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', marginBottom: '30px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ marginBottom: '15px' }}>Generar Reporte del Sistema</h3>
-          <form onSubmit={generarNuevoReporte} style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label>Tipo de Reporte</label>
-              <select value={tipoReporte} onChange={(e) => setTipoReporte(e.target.value)} style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
-                <option value="Financiero">Financiero</option>
-                <option value="Estadistico">Estadístico</option>
-              </select>
+        {/* KPIs Conectados a la base de datos */}
+        <section className={styles.kpiGrid}>
+          <div className={styles.kpiCard}>
+            <div className={`${styles.kpiIcon} ${styles.blue}`}>
+              <TrendingUp size={20} />
             </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label>Periodo</label>
-              <select value={periodoReporte} onChange={(e) => setPeriodoReporte(e.target.value)} style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
-                <option value="Diario">Diario</option>
-                <option value="Mensual">Mensual</option>
-              </select>
+            <div className={styles.kpiInfo}>
+              <span>Ingresos de Hoy</span>
+              <h2>{formatCOP(metricas.ingresosHoy || 0)}</h2>
             </div>
+          </div>
 
-            <button type="submit" style={{ marginTop: '22px', padding: '9px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-              Ejecutar Consulta
-            </button>
-          </form>
+          <div className={styles.kpiCard}>
+            <div className={`${styles.kpiIcon} ${styles.pink}`}>
+              <BarChart3 size={20} />
+            </div>
+            <div className={styles.kpiInfo}>
+              <span>Cupos Ocupados</span>
+              <h2>{metricas.ocupados} / {metricas.totalCupos}</h2>
+            </div>
+          </div>
+
+          <div className={styles.kpiCard}>
+            <div className={`${styles.kpiIcon} ${styles.green}`}>
+              <Users size={20} />
+            </div>
+            <div className={styles.kpiInfo}>
+              <span>Total Clientes</span>
+              <h2>{metricas.clientesActivos}</h2>
+            </div>
+          </div>
+
+          <div className={styles.kpiCard}>
+            <div className={`${styles.kpiIcon} ${styles.orange}`}>
+              <Car size={20} />
+            </div>
+            <div className={styles.kpiInfo}>
+              <span>Cupos Disponibles</span>
+              <h2>{metricas.disponibles}</h2>
+            </div>
+          </div>
         </section>
 
+        {/* Gráficos Distribuidos */}
+        <section className={styles.chartsGrid}>
+          <div className={styles.chartWrapper}>
+            <h3>Ingresos por Día</h3>
+            <div style={{ width: '100%', height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={datosIngresos} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="name" stroke="#94a3b8" tickLine={false} />
+                  <YAxis stroke="#94a3b8" tickLine={false} />
+                  <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                  <Bar dataKey="ingresos" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Ingresos (COP)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className={styles.chartWrapper}>
+            <h3>Distribución por Tipo de Vehículo</h3>
+            <div style={{ width: '100%', height: 300, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={datosVehiculos}
+                    cx="50%"
+                    cy="45%"
+                    innerRadius={60}
+                    outerRadius={85}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {datosVehiculos.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${value}%`} />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36} 
+                    iconType="circle"
+                    formatter={(value, entry) => (
+                      <span style={{ color: '#94a3b8', fontSize: '13px' }}>{value} {entry.payload.value}%</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </section>
+
+        {/* Tabla de Historial con Datos de la Tabla `control_i_s` de tu Base de Datos */}
         <section className={styles.tableContainer}>
+          <h3>Historial de Vehículos Recientes</h3>
           <table className={styles.customTable}>
             <thead>
               <tr>
-                <th>ID Reporte</th>
-                <th>Tipo de Reporte</th>
-                <th>Periodo</th>
-                <th>Generado Por</th>
-                <th>Fecha de Creación</th>
+                <th>Placa</th>
+                <th>Tipo</th>
+                <th>Hora Ingreso</th>
+                <th>Hora Salida</th>
+                <th style={{ textAlign: 'center' }}>Estado</th>
               </tr>
             </thead>
             <tbody>
-              {reportes.map((reporte) => (
-                <tr key={reporte.id_reporte}>
-                  <td>{reporte.id_reporte}</td>
-                  <td><strong>{reporte.tipo_reporte}</strong></td>
-                  <td>{reporte.periodo_reporte}</td>
-                  <td>{reporte.nombre_usuario}</td>
-                  <td>{new Date(reporte.fecha_generado).toLocaleString()}</td>
+              {actividadReciente.map((vehiculo, idx) => (
+                <tr key={idx}>
+                  <td className={styles.placaText}>{vehiculo.placa_vehiculo}</td>
+                  <td>{vehiculo.tipo_vehiculo || 'Automóvil'}</td>
+                  <td>{new Date(vehiculo.hora_ingreso).toLocaleString('es-CO')}</td>
+                  <td>{vehiculo.hora_salida ? new Date(vehiculo.hora_salida).toLocaleString('es-CO') : '-'}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    <span className={vehiculo.hora_salida ? styles.badgeSalio : styles.badgeDentro}>
+                      {vehiculo.hora_salida ? 'Salida' : 'Dentro'}
+                    </span>
+                  </td>
                 </tr>
               ))}
-              {reportes.length === 0 && (
+              
+              {actividadReciente.length === 0 && (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>No hay registros de reportes en el sistema.</td>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+                    No hay registros de ingresos o salidas el día de hoy.
+                  </td>
                 </tr>
               )}
             </tbody>

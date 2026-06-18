@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const verificarToken = require('../middleware/authMiddleware'); // Tu middleware de verificación
+
+// Cambia la línea 5 por esta opción si tu middleware se exporta como objeto:
+const { verificarToken } = require('../middlewares/authMiddleware');
 
 // Rutas protegidas para administración de clientes
 router.get('/clientes', verificarToken, adminController.obtenerClientes);
@@ -17,4 +19,5 @@ router.put('/tarifas/:id', verificarToken, adminController.actualizarTarifa);
 
 // Ruta protegida para obtener la data real del Dashboard
 router.get('/dashboard/metricas', verificarToken, adminController.obtenerMetricasDashboard);
+
 module.exports = router;

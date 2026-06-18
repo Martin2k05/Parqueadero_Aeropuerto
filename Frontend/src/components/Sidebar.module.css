@@ -9,6 +9,8 @@
   padding: 24px 16px;
   position: sticky;
   top: 0;
+  box-sizing: border-box;
+  z-index: 100;
 }
 
 .logoContainer {
@@ -33,11 +35,14 @@
   font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.5px;
+  margin: 0;
+  color: #ffffff;
 }
 
 .logoText p {
   font-size: 0.75rem;
   color: #94a3b8;
+  margin: 0;
 }
 
 .userCard {
@@ -53,12 +58,14 @@
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 1px;
+  margin: 0;
 }
 
 .userCard h2 {
   font-size: 1rem;
   font-weight: 600;
-  margin-top: 4px;
+  margin: 4px 0 0 0;
+  color: #ffffff;
 }
 
 .badge {
@@ -89,6 +96,11 @@
   border-radius: 12px;
   font-size: 0.9rem;
   font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   transition: all 0.2s ease;
 }
 
@@ -106,6 +118,11 @@
   border-radius: 12px;
   font-size: 0.9rem;
   font-weight: 500;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(67, 100, 247, 0.2);
 }
 
 .logoutBtn {
@@ -117,6 +134,11 @@
   border-radius: 12px;
   font-size: 0.9rem;
   font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   transition: background 0.2s;
 }
 

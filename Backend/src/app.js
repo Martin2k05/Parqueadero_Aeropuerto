@@ -2,11 +2,12 @@ const express = require('express');
 const cors = require('cors');
 
 // ==========================================
-// IMPORTE DE RUTAS CORREGIDO (Sin el prefijo /src)
+// IMPORTE DE RUTAS (Se agregó adminRoutes)
 // ==========================================
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes'); 
 const paymentRoutes = require('./routes/paymentRoutes');
+const adminRoutes = require('./routes/adminRoutes'); // <-- AQUÍ: Importamos tus rutas de admin
 
 const app = express();
 
@@ -37,13 +38,16 @@ app.use((req, res, next) => {
 
 // Rutas de Autenticación y Perfil (Login, Registro, Perfil)
 app.use('/api/auth', authRoutes);
-app.use('/auth', authRoutes); // Respaldo por si el front apunta directo
+app.use('/auth', authRoutes); 
 
-// Rutas del Dashboard (Operario/Admin y Clientes)
-app.use('/api/dashboard', dashboardRoutes); // <- Esto soluciona el 404 de /api/dashboard/cliente
+// Rutas de Administración Completa (Clientes, Reportes, Tarifas, Métricas)
+app.use('/api/admin', adminRoutes); // <-- AQUÍ: Vinculamos /api/admin con adminRoutes.js
+
+// Rutas del Dashboard General
+app.use('/api/dashboard', dashboardRoutes); 
 
 // Rutas de Pagos (Mercado Pago)
-app.use('/api/payments', paymentRoutes);     // Amazon / Webhook golpeará aquí
+app.use('/api/payments', paymentRoutes);     
 
 // ==========================================
 // CAPTURADOR GLOBAL DE RUTAS INEXISTENTES (404)
@@ -66,5 +70,4 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Exportamos la app configurada para que server.js la encienda
 module.exports = app;

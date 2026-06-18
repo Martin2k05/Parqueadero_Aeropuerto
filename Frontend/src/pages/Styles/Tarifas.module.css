@@ -1,0 +1,166 @@
+.dashboardContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: #0b111e;
+  color: #f8fafc;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 40px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.header p {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.btnEditar {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnCancel {
+  background-color: #dc2626;
+}
+
+.categoriesStack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.categoryRow {
+  background-color: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.rowInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.iconContainer {
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blueIcon { background-color: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.purpleIcon { background-color: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.greenIcon { background-color: rgba(16, 185, 129, 0.2); color: #10b981; }
+
+.rowInfo h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.rowInfo p {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.btnSaveRow {
+  margin-left: auto;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.inputsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.inputBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputBox label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.inputBox input {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  color: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+}
+
+.inputBox input:disabled {
+  background-color: #141b2b;
+  border-color: #1f2937;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+/* Footer de información */
+.infoFooter {
+  margin-top: 20px;
+  background-color: rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.infoFooter h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.infoFooter ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.blueTxt { color: #3b82f6; font-weight: 600; }
+.purpleTxt { color: #a855f7; font-weight: 600; }
+.greenTxt { color: #10b981; font-weight: 600; }
+
+.alerta {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+.alertaExito { background-color: rgba(16, 185, 129, 0.1); color: #10b981; }
+.alertaError { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; }

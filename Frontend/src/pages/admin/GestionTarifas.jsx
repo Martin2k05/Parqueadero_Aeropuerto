@@ -1,192 +1,306 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from '../Styles/OperarioDashboard.module.css';
+import { Car, Bike, ShieldAlert, Edit2, Check } from 'lucide-react';
+import Sidebar from '../../components/Sidebar';
+import styles from '../Styles/Tarifas.module.css';
 
 const GestionTarifas = () => {
   const navigate = useNavigate();
   const [tarifas, setTarifas] = useState([]);
-  const [usuarioActivo, setUsuarioActivo] = useState({});
-  const [tarifaEditando, setTarifaEditando] = useState(null);
-  
-  // Estados para el formulario de edición
-  const [v1, setV1] = useState('');
-  const [v2, setV2] = useState('');
-  const [v3, setV3] = useState('');
-  const [v4, setV4] = useState('');
-  const [v5, setV5] = useState('');
-  const [normativa, setNormativa] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [editando, setEditando] = useState(false);
+  const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || user.rol !== 'Administrador') {
+    if (!user || (user.rol !== 'Admin' && user.rol !== 'Administrador')) {
       navigate('/login');
     } else {
-      setUsuarioActivo(user);
-      cargarTarifas();
+      cargarTarifasDB();
     }
   }, [navigate]);
 
-  const cargarTarifas = async () => {
+  const cargarTarifasDB = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
       const respuesta = await fetch('http://localhost:5000/api/admin/tarifas', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const datos = await respuesta.json();
-      if (respuesta.ok) {
+      if (respuesta.ok && Array.isArray(datos)) {
         setTarifas(datos);
       }
     } catch (error) {
-      console.error('Error al cargar tarifas:', error);
+      console.error(error);
+      mostrarAlerta('Error al conectar con la base de datos', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const iniciarEdicion = (tarifa) => {
-    setTarifaEditando(tarifa.id_tarifa);
-    setV1(tarifa.valor_primera_hora);
-    setV2(tarifa.valor_hora_2_a_12);
-    setV3(tarifa.valor_hora_13_a_168);
-    setV4(tarifa.valor_hora_169_mas);
-    setV5(tarifa.valor_mensualidad);
-    setNormativa(tarifa.normativa);
+  const handleInputChange = (idTarifa, campo, valor) => {
+    setTarifas(prev => prev.map(t => t.id_tarifa === idTarifa ? { ...t, [campo]: Number(valor) } : t));
   };
 
-  const guardarCambiosTarifa = async (id) => {
+  const guardarCambiosCategoría = async (ids) => {
     try {
       const token = localStorage.getItem('token');
-      const respuesta = await fetch(`http://localhost:5000/api/admin/tarifas/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          valor_primera_hora: parseFloat(v1),
-          valor_hora_2_a_12: parseFloat(v2),
-          valor_hora_13_a_168: parseFloat(v3),
-          valor_hora_169_mas: parseFloat(v4),
-          valor_mensualidad: parseFloat(v5),
-          normativa: normativa
-        })
+      const promesas = ids.map(id => {
+        const tarifa = tarifas.find(t => t.id_tarifa === id);
+        return fetch(`http://localhost:5000/api/admin/tarifas/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(tarifa)
+        });
       });
 
-      if (respuesta.ok) {
-        setTarifaEditando(null);
-        cargarTarifas();
+      const respuestas = await Promise.all(promesas);
+      if (respuestas.every(r => r.ok)) {
+        mostrarAlerta('Tarifas actualizadas correctamente en la base de datos', 'exito');
+        setEditando(false);
+        cargarTarifasDB();
+      } else {
+        mostrarAlerta('Ocurrió un error al actualizar algunas tarifas', 'error');
       }
     } catch (error) {
-      console.error('Error al actualizar la configuración de tarifas:', error);
+      mostrarAlerta('Error interno del sistema', 'error');
     }
+  };
+
+  const mostrarAlerta = (texto, tipo) => {
+    setMensaje({ texto, tipo });
+    setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
+  };
+
+  // Filtrado por las 3 filas del Figma usando las IDs de tu base de datos semilla
+  const catVehiculosGrandes = tarifas.filter(t => [1, 2, 3, 4, 5].includes(t.id_tarifa));
+  const tarifaMoto = tarifas.find(t => t.id_tarifa === 6);
+  const tarifaBici = tarifas.find(t => t.id_tarifa === 7);
+
+  // Tomamos una de referencia para mostrar los valores en los inputs deshabilitados/habilitados
+  const refGrande = catVehiculosGrandes[0] || { valor_primera_hora: 0, valor_hora_2_a_12: 0, valor_hora_13_a_168: 0, valor_hora_169_mas: 0 };
+
+  const actualizarCamposGrupoGrandes = (campo, valor) => {
+    setTarifas(prev => prev.map(t => [1, 2, 3, 4, 5].includes(t.id_tarifa) ? { ...t, [campo]: Number(valor) } : t));
   };
 
   return (
     <div className={styles.dashboardContainer}>
-      <aside className={styles.sidebar}>
-        <div className={styles.logoContainer}>
-          <h2>AeroParking</h2>
-          <p>Sistema Inteligente</p>
-        </div>
-        <div className={styles.userInfo}>
-          <p className={styles.userLabel}>Usuario activo</p>
-          <p className={styles.userName}>{usuarioActivo.nombre || 'Carlos Admin'}</p>
-          <p className={styles.userRole}>{usuarioActivo.rol || 'Administrador'}</p>
-        </div>
-        <nav className={styles.navMenu}>
-          <button className={styles.navButton} onClick={() => navigate('/admin/dashboard')}>Dashboard</button>
-          <button className={styles.navButton} onClick={() => navigate('/admin/clientes')}>Clientes</button>
-          <button className={styles.navButton} onClick={() => navigate('/admin/reportes')}>Reportes</button>
-          <button className={`${styles.navButton} ${styles.active}`} onClick={() => navigate('/admin/tarifas')}>Tarifas</button>
-        </nav>
-        <button className={styles.logoutButton} onClick={() => { localStorage.clear(); navigate('/login'); }}>Cerrar Sesión</button>
-      </aside>
+      <Sidebar />
 
       <main className={styles.mainContent}>
         <header className={styles.header}>
-          <h1>Configuración de Tarifas</h1>
-          <p>Ajusta los 5 rangos de precios oficiales para cada tipo de vehículo</p>
+          <div>
+            <h1>Gestión de Tarifas</h1>
+            <p>Configura los precios por categoría de vehículo</p>
+          </div>
+          <button 
+            onClick={() => { if (editando) { cargarTarifasDB(); } setEditando(!editando); }} 
+            className={`${styles.btnEditar} ${editando ? styles.btnCancel : ''}`}
+          >
+            {editando ? 'Cancelar Ajuste' : <><Edit2 size={16} /> Editar Tarifas</>}
+          </button>
         </header>
 
-        <section className={styles.tableContainer}>
-          <table className={styles.customTable}>
-            <thead>
-              <tr>
-                <th>Vehículo</th>
-                <th>Rango 1 (1ra Hora)</th>
-                <th>Rango 2 (2 a 12h)</th>
-                <th>Rango 3 (13 a 168h)</th>
-                <th>Rango 4 (169h o más)</th>
-                <th>Rango 5 (Mensualidad)</th>
-                <th>Normativa</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tarifas.map((t) => (
-                <tr key={t.id_tarifa}>
-                  <td><strong>{t.tipo_vehiculo}</strong></td>
-                  <td>
-                    {tarifaEditando === t.id_tarifa ? (
-                      <input type="number" value={v1} onChange={(e) => setV1(e.target.value)} style={{ width: '80px', padding: '4px' }} />
-                    ) : (
-                      `$${t.valor_primera_hora}`
-                    )}
-                  </td>
-                  <td>
-                    {tarifaEditando === t.id_tarifa ? (
-                      <input type="number" value={v2} onChange={(e) => setV2(e.target.value)} style={{ width: '80px', padding: '4px' }} />
-                    ) : (
-                      `$${t.valor_hora_2_a_12}`
-                    )}
-                  </td>
-                  <td>
-                    {tarifaEditando === t.id_tarifa ? (
-                      <input type="number" value={v3} onChange={(e) => setV3(e.target.value)} style={{ width: '80px', padding: '4px' }} />
-                    ) : (
-                      `$${t.valor_hora_13_a_168}`
-                    )}
-                  </td>
-                  <td>
-                    {tarifaEditando === t.id_tarifa ? (
-                      <input type="number" value={v4} onChange={(e) => setV4(e.target.value)} style={{ width: '80px', padding: '4px' }} />
-                    ) : (
-                      `$${t.valor_hora_169_mas}`
-                    )}
-                  </td>
-                  <td>
-                    {tarifaEditando === t.id_tarifa ? (
-                      <input type="number" value={v5} onChange={(e) => setV5(e.target.value)} style={{ width: '80px', padding: '4px' }} />
-                    ) : (
-                      `$${t.valor_mensualidad}`
-                    )}
-                  </td>
-                  <td>
-                    {tarifaEditando === t.id_tarifa ? (
-                      <input type="text" value={normativa} onChange={(e) => setNormativa(e.target.value)} style={{ width: '120px', padding: '4px' }} />
-                    ) : (
-                      t.normativa
-                    )}
-                  </td>
-                  <td>
-                    {tarifaEditando === t.id_tarifa ? (
-                      <div style={{ display: 'flex', gap: '5px' }}>
-                        <button onClick={() => guardarCambiosTarifa(t.id_tarifa)} style={{ backgroundColor: '#22c55e', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-                          Guardar
-                        </button>
-                        <button onClick={() => setTarifaEditando(null)} style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-                          X
-                        </button>
-                      </div>
-                    ) : (
-                      <button onClick={() => iniciarEdicion(t)} style={{ backgroundColor: '#2563eb', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-                        Editar
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+        {mensaje.texto && (
+          <div className={`${styles.alerta} ${mensaje.tipo === 'error' ? styles.alertaError : styles.alertaExito}`}>
+            <span>{mensaje.texto}</span>
+          </div>
+        )}
+
+        {loading ? (
+          <div className={styles.loading}>Conectando con la base de datos...</div>
+        ) : (
+          <div className={styles.categoriesStack}>
+            
+            {/* CATEGORÍA 1: VEHÍCULOS GRANDES */}
+            <div className={styles.categoryRow}>
+              <div className={styles.rowInfo}>
+                <div className={`${styles.iconContainer} ${styles.blueIcon}`}>
+                  <Car size={20} />
+                </div>
+                <div>
+                  <h3>Categoría 1</h3>
+                  <p>Automóviles, Camperos, Camionetas, Microbuses, Motocarros</p>
+                </div>
+                {editando && (
+                  <button onClick={() => guardarCambiosCategoría([1,2,3,4,5])} className={styles.btnSaveRow} title="Guardar esta categoría">
+                    <Check size={16} />
+                  </button>
+                )}
+              </div>
+              <div className={styles.inputsGrid}>
+                <div className={styles.inputBox}>
+                  <label>1 Hora</label>
+                  <input 
+                    type="number" 
+                    disabled={!editando} 
+                    value={refGrande.valor_primera_hora} 
+                    onChange={(e) => actualizarCamposGrupoGrandes('valor_primera_hora', e.target.value)}
+                  />
+                </div>
+                <div className={styles.inputBox}>
+                  <label>2 a 12 Horas</label>
+                  <input 
+                    type="number" 
+                    disabled={!editando} 
+                    value={refGrande.valor_hora_2_a_12} 
+                    onChange={(e) => actualizarCamposGrupoGrandes('valor_hora_2_a_12', e.target.value)}
+                  />
+                </div>
+                <div className={styles.inputBox}>
+                  <label>13 a 168 Horas (7 días)</label>
+                  <input 
+                    type="number" 
+                    disabled={!editando} 
+                    value={refGrande.valor_hora_13_a_168} 
+                    onChange={(e) => actualizarCamposGrupoGrandes('valor_hora_13_a_168', e.target.value)}
+                  />
+                </div>
+                <div className={styles.inputBox}>
+                  <label>169 Horas o Más</label>
+                  <input 
+                    type="number" 
+                    disabled={!editando} 
+                    value={refGrande.valor_hora_169_mas} 
+                    onChange={(e) => actualizarCamposGrupoGrandes('valor_hora_169_mas', e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* CATEGORÍA 2: MOTOCICLETAS */}
+            {tarifaMoto && (
+              <div className={styles.categoryRow}>
+                <div className={styles.rowInfo}>
+                  <div className={`${styles.iconContainer} ${styles.purpleIcon}`}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M7.5 13h9M13 13l2-5h2M9 13l1.5-3.5"/></svg>
+                  </div>
+                  <div>
+                    <h3>Categoría 2</h3>
+                    <p>Motocicletas</p>
+                  </div>
+                  {editando && (
+                    <button onClick={() => guardarCambiosCategoría([6])} className={styles.btnSaveRow}>
+                      <Check size={16} />
+                    </button>
+                  )}
+                </div>
+                <div className={styles.inputsGrid}>
+                  <div className={styles.inputBox}>
+                    <label>1 Hora</label>
+                    <input 
+                      type="number" 
+                      disabled={!editando} 
+                      value={tarifaMoto.valor_primera_hora} 
+                      onChange={(e) => handleInputChange(6, 'valor_primera_hora', e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.inputBox}>
+                    <label>2 a 12 Horas</label>
+                    <input 
+                      type="number" 
+                      disabled={!editando} 
+                      value={tarifaMoto.valor_hora_2_a_12} 
+                      onChange={(e) => handleInputChange(6, 'valor_hora_2_a_12', e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.inputBox}>
+                    <label>13 a 168 Horas (7 días)</label>
+                    <input 
+                      type="number" 
+                      disabled={!editando} 
+                      value={tarifaMoto.valor_hora_13_a_168} 
+                      onChange={(e) => handleInputChange(6, 'valor_hora_13_a_168', e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.inputBox}>
+                    <label>169 Horas o Más</label>
+                    <input 
+                      type="number" 
+                      disabled={!editando} 
+                      value={tarifaMoto.valor_hora_169_mas} 
+                      onChange={(e) => handleInputChange(6, 'valor_hora_169_mas', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CATEGORÍA 3: BICICLETAS */}
+            {tarifaBici && (
+              <div className={styles.categoryRow}>
+                <div className={styles.rowInfo}>
+                  <div className={`${styles.iconContainer} ${styles.greenIcon}`}>
+                    <Bike size={20} />
+                  </div>
+                  <div>
+                    <h3>Categoría 3</h3>
+                    <p>Bicicletas</p>
+                  </div>
+                  {editando && (
+                    <button onClick={() => guardarCambiosCategoría([7])} className={styles.btnSaveRow}>
+                      <Check size={16} />
+                    </button>
+                  )}
+                </div>
+                <div className={styles.inputsGrid}>
+                  <div className={styles.inputBox}>
+                    <label>1 Hora</label>
+                    <input 
+                      type="number" 
+                      disabled={!editando} 
+                      value={tarifaBici.valor_primera_hora} 
+                      onChange={(e) => handleInputChange(7, 'valor_primera_hora', e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.inputBox}>
+                    <label>2 a 12 Horas</label>
+                    <input 
+                      type="number" 
+                      disabled={!editando} 
+                      value={tarifaBici.valor_hora_2_a_12} 
+                      onChange={(e) => handleInputChange(7, 'valor_hora_2_a_12', e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.inputBox}>
+                    <label>13 a 168 Horas (7 días)</label>
+                    <input 
+                      type="number" 
+                      disabled={!editando} 
+                      value={tarifaBici.valor_hora_13_a_168} 
+                      onChange={(e) => handleInputChange(7, 'valor_hora_13_a_168', e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.inputBox}>
+                    <label>169 Horas o Más</label>
+                    <input 
+                      type="number" 
+                      disabled={!editando} 
+                      value={tarifaBici.valor_hora_169_mas} 
+                      onChange={(e) => handleInputChange(7, 'valor_hora_169_mas', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PANEL DE INFORMACIÓN BAJO */}
+            <footer className={styles.infoFooter}>
+              <h4>Información sobre las categorías</h4>
+              <ul>
+                <li><span className={styles.blueTxt}>Categoría 1:</span> Vehículos grandes - Automóviles, Camperos, Camionetas, Microbuses, Motocarros</li>
+                <li><span className={styles.purpleTxt}>Categoría 2:</span> Vehículos medianos - Motocicletas</li>
+                <li><span className={styles.greenTxt}>Categoría 3:</span> Vehículos pequeños - Bicicletas</li>
+              </ul>
+            </footer>
+
+          </div>
+        )}
       </main>
     </div>
   );
