@@ -1,120 +1,180 @@
 const db = require('../config/db');
+const multer = require('multer');
+const axios = require('axios');
+const FormData = require('form-data');
+const fs = require('fs');
 
-exports.registrarIngreso = async (req, res) => {
-  const { placaVehiculo, tipoVehiculo } = req.body; // 'Automovil', 'Motocicleta', etc.
-  const horaIngreso = new Date();
-  const fechaIngreso = horaIngreso.toISOString().split('T')[0];
+const upload = multer({ dest: 'uploads/' });
 
+// =========================================================================
+// ⚠️ MANO: PEGA TU TOKEN AQUÍ ADENTRO DE LAS COMILLAS SIMPLES
+// Debe verse algo así como: const API_TOKEN = '9a8b7c6d5e4f3210...';
+// =========================================================================
+const API_TOKEN = '7b7475e3f9743f84bd4ba096fd12a34d94b2d34f'; 
+
+// ==========================================
+// 1. RECONOCIMIENTO AUTOMÁTICO (ALPR)
+// ==========================================
+exports.leerPlaca = [upload.single('foto'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No se recibió imagen." });
+  
   try {
-    // Validar si el vehículo ya se encuentra dentro del parqueadero
-    const [dentro] = await db.query('SELECT * FROM control_i_s WHERE placa_vehiculo = ? AND hora_salida IS NULL', [placaVehiculo]);
-    if (dentro.length > 0) {
-      return res.status(400).json({ message: 'El vehículo ya se encuentra dentro del parqueadero.' });
+    const formData = new FormData();
+    formData.append('upload', fs.createReadStream(req.file.path));
+
+    const response = await axios.post('https://api.platerecognizer.com/v1/plate-reader/', formData, {
+      headers: { 
+        'Authorization': `Token ${API_TOKEN}`,
+        ...formData.getHeaders() 
+      }
+    });
+
+    // Borramos el archivo temporal
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+    if (response.data.results && response.data.results.length > 0) {
+      return res.json({ placa: response.data.results[0].plate.toUpperCase() });
+    } else {
+      return res.status(404).json({ message: "No se detectó ninguna placa clara." });
     }
-
-    // Asegurar existencia del vehículo en la maestro de vehículos
-    await db.query('INSERT IGNORE INTO vehiculos (placa_vehiculo) VALUES (?)', [placaVehiculo]);
-
-    // Buscar tarifa asociada al tipo de vehículo
-    const [tarifa] = await db.query('SELECT id_tarifa FROM tarifas WHERE tipo_vehiculo = ?', [tipoVehiculo]);
-    if (tarifa.length === 0) {
-      return res.status(404).json({ message: 'Tipo de vehículo o tarifa no configurada.' });
-    }
-
-    const idTarifa = tarifa[0].id_tarifa;
-
-    // Registrar en control de ingresos
-    await db.query(
-      'INSERT INTO control_i_s (placa_vehiculo, id_tarifa, hora_ingreso, fecha_ingreso) VALUES (?, ?, ?, ?)',
-      [placaVehiculo, idTarifa, horaIngreso, fechaIngreso]
-    );
-
-    res.status(201).json({ message: 'Ingreso registrado de manera exitosa.' });
-
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al registrar el ingreso vehicular.' });
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    console.error("DETALLE DEL ERROR DE IA:", error.response ? error.response.data : error.message);
+    return res.status(500).json({ message: "Error en IA", detalle: error.message });
   }
-};
+}];
 
-exports.registrarSalida = async (req, res) => {
-  const { placaVehiculo, metodoPago } = req.body; // Efectivo, Transferencia, QR
-  const horaSalida = new Date();
-  const fechaSalida = horaSalida.toISOString().split('T')[0];
+// ==========================================
+// 2. REGISTRAR INGRESO VEHICULAR
+// ==========================================
+exports.registrarIngreso = async (req, res) => {
+  const { placaVehiculo, tipoVehiculo } = req.body;
+  const idUsuarioActivo = req.user ? req.user.id : 1; 
 
   try {
-    // Buscar registro de ingreso activo
-    const [registros] = await db.query(
-      'SELECT c.*, t.valor_primera_hora, t.valor_hora_2_a_12 FROM control_i_s c JOIN tarifas t ON c.id_tarifa = t.id_tarifa WHERE c.placa_vehiculo = ? AND c.hora_salida IS NULL',
-      [placaVehiculo]
-    );
-
-    if (registros.length === 0) {
-      return res.status(404).json({ message: 'No se encontró un registro de ingreso activo para esta placa.' });
+    if (!placaVehiculo || !tipoVehiculo) {
+      return res.status(400).json({ message: 'La placa y el tipo de vehículo son requeridos.' });
     }
 
-    const registro = registros[0];
-    const diffMs = horaSalida - new Date(registro.hora_ingreso);
-    const diffMinutos = Math.max(1, Math.round(diffMs / 60000));
-
-    // Verificar si cuenta con mensualidad activa vigente
-    const [mensualidad] = await db.query(
-      'SELECT id_mensualidad FROM mensualidades WHERE placa_vehiculo = ? AND fecha_final >= ?',
-      [placaVehiculo, fechaSalida]
-    );
-
-    let totalAPagar = 0.00;
-
-    // Si no tiene mensualidad, se realiza el cálculo correspondiente por rango de horas
-    if (mensualidad.length === 0) {
-      const horasACobrar = Math.ceil(diffMinutos / 60);
-      if (horasACobrar <= 1) {
-        totalAPagar = parseFloat(registro.valor_primera_hora);
-      } else {
-        totalAPagar = parseFloat(registro.valor_primera_hora) + (parseFloat(registro.valor_hora_2_a_12) * (horasACobrar - 1));
+    const ident = placaVehiculo.toUpperCase().trim();
+    
+    if (tipoVehiculo === 'Bicicleta') {
+      if (ident.length < 10 || ident.length > 12) {
+        return res.status(400).json({ message: 'El ID de bicicleta debe tener entre 10 y 12 caracteres.' });
+      }
+    } else {
+      if (ident.length !== 6) {
+        return res.status(400).json({ message: 'La placa debe tener exactamente 6 caracteres.' });
       }
     }
 
-    // Actualizar registro de control
-    await db.query(
-      'UPDATE control_i_s SET hora_salida = ?, fecha_salida = ?, calculo_tarifa = ? WHERE id_control_i_s = ?',
-      [horaSalida, fechaSalida, totalAPagar, registro.id_control_i_s]
+    const [duplicados] = await db.query(
+      'SELECT id_control_i_s FROM control_i_s WHERE placa_vehiculo = ? AND hora_salida IS NULL',
+      [ident]
     );
 
-    // Registrar pago efectuado si el valor supera cero
+    if (duplicados.length > 0) {
+      return res.status(400).json({ message: 'Error: Este vehículo ya se encuentra dentro.' });
+    }
+
+    const [tarifa] = await db.query('SELECT id_tarifa FROM tarifas WHERE tipo_vehiculo = ? LIMIT 1', [tipoVehiculo]);
+    if (tarifa.length === 0) {
+      return res.status(404).json({ message: 'Tipo de vehículo no configurado.' });
+    }
+    const idTarifa = tarifa[0].id_tarifa;
+
+    await db.query('INSERT IGNORE INTO vehiculos (placa_vehiculo) VALUES (?)', [ident]);
+
+    await db.query(
+      `INSERT INTO control_i_s (placa_vehiculo, id_tarifa, id_usuario, hora_ingreso, fecha_ingreso) 
+       VALUES (?, ?, ?, NOW(), CURDATE())`,
+      [ident, idTarifa, idUsuarioActivo]
+    );
+    
+    res.status(201).json({ message: 'Ingreso registrado exitosamente.' });
+  } catch (error) {
+    console.error("❌ ERROR EN INGRESO:", error);
+    res.status(500).json({ message: 'Error interno en el ingreso.' });
+  }
+};
+
+// ==========================================
+// 3. REGISTRAR SALIDA Y LIQUIDACIÓN
+// ==========================================
+exports.registrarSalida = async (req, res) => {
+  const { placaVehiculo, metodoPago } = req.body;
+  if (!placaVehiculo) return res.status(400).json({ message: 'Placa obligatoria.' });
+
+  const ident = placaVehiculo.toUpperCase().trim();
+  const now = new Date();
+
+  try {
+    const [registros] = await db.query(`
+      SELECT c.id_control_i_s, c.hora_ingreso, t.tipo_vehiculo, t.valor_primera_hora, t.valor_hora_2_a_12
+      FROM control_i_s c
+      JOIN tarifas t ON c.id_tarifa = t.id_tarifa
+      WHERE c.placa_vehiculo = ? AND c.hora_salida IS NULL`, [ident]);
+
+    if (registros.length === 0) return res.status(404).json({ message: 'Vehículo no encontrado activo.' });
+
+    const registro = registros[0];
+    const diffMs = now - new Date(registro.hora_ingreso);
+    const diffMinutos = Math.max(1, Math.round(diffMs / 60000));
+    
+    const totalAPagar = (registro.tipo_vehiculo === 'Bicicleta') ? 700 : (Math.ceil(diffMinutos/60) * registro.valor_primera_hora);
+
+    await db.query(
+      'UPDATE control_i_s SET hora_salida = ?, fecha_salida = CURDATE(), calculo_tarifa = ? WHERE id_control_i_s = ?',
+      [now, totalAPagar, registro.id_control_i_s]
+    );
+
     if (totalAPagar > 0) {
       await db.query('INSERT INTO pagos (id_control_i_s, metodo_pago) VALUES (?, ?)', [registro.id_control_i_s, metodoPago || 'Efectivo']);
     }
 
-    res.json({
-      message: 'Salida procesada correctamente.',
-      datos: {
-        placa: placaVehiculo,
-        tiempoMinutos: diffMinutos,
-        totalCobrado: totalAPagar,
-        observacion: mensualidad.length > 0 ? 'Exento por Plan Mensual Activo' : 'Liquidación Estándar'
-      }
-    });
-
+    res.json({ message: `Salida procesada. Total: $${totalAPagar}`, totalCobrado: totalAPagar });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al liquidar la salida del vehículo.' });
+    res.status(500).json({ message: 'Error interno en salida.' });
   }
 };
 
+// ==========================================
+// 4. LISTAR VEHÍCULOS ACTIVOS
+// ==========================================
 exports.listarVehiculosDentro = async (req, res) => {
   try {
     const [vehiculos] = await db.query(`
-      SELECT c.placa_vehiculo, t.tipo_vehiculo, c.hora_ingreso, 
-             TIMESTAMPDIFF(MINUTE, c.hora_ingreso, NOW()) AS minutos_transcurridos
-      FROM control_i_s c
-      JOIN tarifas t ON c.id_tarifa = t.id_tarifa
-      WHERE c.hora_salida IS NULL
-      ORDER BY c.hora_ingreso DESC
-    `);
+      SELECT c.id_control_i_s, c.placa_vehiculo, t.tipo_vehiculo, c.hora_ingreso
+      FROM control_i_s c JOIN tarifas t ON c.id_tarifa = t.id_tarifa WHERE c.hora_salida IS NULL`);
     res.json(vehiculos);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al obtener vehículos activos.' });
+    res.status(500).json({ message: 'Error al listar.' });
+  }
+};
+
+// ==========================================
+// 5. ELIMINAR REGISTRO (Corrección)
+// ==========================================
+exports.eliminarRegistro = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query('DELETE FROM control_i_s WHERE id_control_i_s = ?', [id]);
+    res.json({ message: 'Registro eliminado correctamente.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar.' });
+  }
+};
+
+// ==========================================
+// 6. HISTORIAL DE SALIDAS
+// ==========================================
+exports.obtenerHistorial = async (req, res) => {
+  try {
+    const [historial] = await db.query(`
+      SELECT placa_vehiculo, fecha_salida, hora_salida, calculo_tarifa 
+      FROM control_i_s WHERE hora_salida IS NOT NULL ORDER BY fecha_salida DESC`);
+    res.json(historial);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al consultar historial.' });
   }
 };

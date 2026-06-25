@@ -60,17 +60,22 @@ const Sidebar = () => {
           )}
 
           {/* VISTAS ACCESIBLES POR OPERARIO O ADMINISTRADOR */}
-          {(user.rol === 'Operario' || isAdmin) && (
-            <>
-              {/* Cambiado a la ruta real que maneja tu enrutador de administración */}
-              <button onClick={() => navigate('/admin/dashboard')} className={location.pathname === '/admin/dashboard' ? styles.menuBtnActive : styles.menuBtn}>
-                <LayoutDashboard size={18} /> Dashboard
-              </button>
-              <button onClick={() => navigate('/control-acceso')} className={location.pathname === '/control-acceso' ? styles.menuBtnActive : styles.menuBtn}>
-                <ShieldAlert size={18} /> Control de Acceso
-              </button>
-            </>
-          )}
+{(user.rol === 'Operario' || isAdmin) && (
+  <>
+    <button 
+      onClick={() => navigate(isAdmin ? '/admin/dashboard' : '/dashboard-monitoreo')} 
+      className={(location.pathname === '/admin/dashboard' || location.pathname === '/dashboard-monitoreo') ? styles.menuBtnActive : styles.menuBtn}
+    >
+      <LayoutDashboard size={18} /> Dashboard
+    </button>
+    <button 
+      onClick={() => navigate('/control-acceso')} 
+      className={location.pathname === '/control-acceso' ? styles.menuBtnActive : styles.menuBtn}
+    >
+      <ShieldAlert size={18} /> Control de Acceso
+    </button>
+  </>
+)}
 
           {/* CONTROL EXCLUSIVO DEL ADMINISTRADOR */}
           {isAdmin && (

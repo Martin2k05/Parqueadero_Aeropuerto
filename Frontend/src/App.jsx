@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'sonner';
+import { Toaster } from 'sonner'; // Mantenemos sonner que es la que ya tienes
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ClienteDashboard from './pages/ClienteDashboard';
@@ -21,7 +21,7 @@ import GestionTarifas from './pages/admin/GestionTarifas';
 function App() {
   return (
     <BrowserRouter>
-      {/* Contenedor global de notificaciones modernas */}
+      {/* AQUÍ ESTÁ EL CAMBIO: Sonner es tu gestor de notificaciones */}
       <Toaster position="top-right" richColors theme="dark" closeButton />
       
       <Routes>

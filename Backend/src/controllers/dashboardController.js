@@ -1,49 +1,82 @@
 const db = require('../config/db');
 
+// ==========================================
+// 1. DASHBOARD DE OPERARIO Y ADMINISTRADOR
+// ==========================================
 exports.getOperarioAdminDashboard = async (req, res) => {
   try {
     const totalCuposConstante = 100;
 
+    // Ocupación actual y flujo del día
     const [[{ ocupados }]] = await db.query('SELECT COUNT(*) AS ocupados FROM control_i_s WHERE hora_salida IS NULL');
     const disponibles = Math.max(0, totalCuposConstante - ocupados);
     const [[{ ingresosHoy }]] = await db.query('SELECT COUNT(*) AS ingresosHoy FROM control_i_s WHERE fecha_ingreso = CURDATE()');
+    
+    // Clientes activos y planes desde la tabla 'mensualidades'
     const [[{ clientesActivos }]] = await db.query('SELECT COUNT(DISTINCT id_cliente) AS clientesActivos FROM mensualidades WHERE fecha_final >= CURDATE()');
-    const [[{ planesPorVencer }]] = await db.query('SELECT COUNT(*) AS planesPorVencer FROM mensualidades WHERE fecha_final BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)');
+    const [[{ planesPorVencer }]] = await db.query(`SELECT COUNT(*) AS planesPorVencer FROM mensualidades WHERE fecha_final BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)`);
 
+    // Ocupación por hora (Consulta real en BD mapeada de forma segura)
+    const [ocupacionRaw] = await db.query('SELECT HOUR(hora_ingreso) as hora, COUNT(*) as vehiculos FROM control_i_s WHERE fecha_ingreso = CURDATE() GROUP BY HOUR(hora_ingreso)');
+    const horasFijos = [6, 9, 12, 15, 18, 21];
+    
+    const ocupacionPorHora = horasFijos.map(h => {
+      const horaFormateada = h < 10 ? `0${h}:00` : `${h}:00`;
+      return {
+        hora: horaFormateada,
+        vehiculos: ocupacionRaw.find(r => r.hora === h)?.vehiculos || 0
+      };
+    });
+
+    // Ingresos Semanales (Consulta real usando WEEKDAY para compatibilidad con cualquier idioma de MySQL)
+    const [ingresosRaw] = await db.query('SELECT WEEKDAY(fecha_salida) as num_dia, SUM(calculo_tarifa) as total FROM control_i_s WHERE fecha_salida >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) GROUP BY WEEKDAY(fecha_salida)');
+    
+    const diasNombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const ingresosSemanales = diasNombres.map((nombre, index) => ({
+      dia: nombre,
+      ingresos: parseFloat(ingresosRaw.find(r => r.num_dia === index)?.total || 0)
+    }));
+
+    // Actividad reciente (Muestra los últimos movimientos con el evento y la fecha/hora formateada)
     const [actividadReciente] = await db.query(`
-      SELECT placa_vehiculo, CONCAT(fecha_ingreso, ' ', TIME(hora_ingreso)) AS fecha_formateada 
-      FROM control_i_s WHERE hora_salida IS NULL ORDER BY hora_ingreso DESC LIMIT 3
+      SELECT 
+        placa_vehiculo, 
+        CASE WHEN hora_salida IS NULL THEN 'Entrada' ELSE 'Salida' END as tipo_movimiento,
+        CONCAT(fecha_ingreso, ' ', TIME(COALESCE(hora_salida, hora_ingreso))) AS fecha_formateada
+      FROM control_i_s 
+      ORDER BY id_control_i_s DESC 
+      LIMIT 5
     `);
 
-    const ocupacionPorHora = [
-      { hora: '06:00', vehiculos: 15 }, { hora: '09:00', vehiculos: 45 }, { hora: '12:00', vehiculos: 70 },
-      { hora: '15:00', vehiculos: 52 }, { hora: '18:00', vehiculos: 75 }, { hora: '21:00', vehiculos: 38 }
-    ];
-
-    const ingresosSemanales = [
-      { dia: 'Lun', ingresos: 240 }, { dia: 'Mar', ingresos: 310 }, { dia: 'Mié', ingresos: 285 },
-      { dia: 'Jue', ingresos: 330 }, { dia: 'Vie', ingresos: 410 }, { dia: 'Sáb', ingresos: 380 }, { dia: 'Dom', ingresos: 295 }
-    ];
-
+    // Respuesta estructurada compatible con ambos Frontends
     res.json({
-      metricas: { totalCupos: totalCuposConstante, ocupados, disponibles, ingresosHoy, clientesActivos, planesPorVencer },
-      ocupacionPorHora, ingresosSemanales, actividadReciente
+      metricas: { 
+        totalCupos: totalCuposConstante, 
+        ocupados, 
+        disponibles, 
+        ingresosHoy, 
+        clientesActivos, 
+        planesPorVencer 
+      },
+      ocupacionPorHora, 
+      ingresosSemanales, 
+      actividadReciente
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error recopilando analíticas del dashboard.' });
+    console.error("❌ Error en getOperarioAdminDashboard:", error);
+    res.status(500).json({ message: 'Error interno al cargar los datos del dashboard comercial.' });
   }
 };
 
 // ==========================================
-// CLIENTE DASHBOARD - CONTROLADO 200 OK
+// 2. DASHBOARD EXCLUSIVO DEL CLIENTE
 // ==========================================
 exports.getClienteDashboard = async (req, res) => {
-  const idCliente = req.user.id;
+  const idCliente = req.user.id; // Proveniente del middleware de autenticación
 
   try {
-    // 1. Buscamos de emergencia la placa nativa registrada en su cuenta de cliente
+    // Buscamos de emergencia la placa nativa registrada en su cuenta de cliente
     const [clienteFila] = await db.query(
       'SELECT placa_vehiculo FROM clientes WHERE id_cliente = ?',
       [idCliente]
@@ -57,18 +90,18 @@ exports.getClienteDashboard = async (req, res) => {
       }
     }
 
-    // 2. Consultar si tiene compras/mensualidades reales
+    // Consultar si tiene compras/mensualidades reales
     const [plan] = await db.query(
       'SELECT m.*, DATEDIFF(m.fecha_final, CURDATE()) AS dias_restantes FROM mensualidades m WHERE m.id_cliente = ? ORDER BY m.id_mensualidad DESC LIMIT 1',
       [idCliente]
     );
 
-    // Si el cliente es nuevo y NUNCA ha comprado una mensualidad:
+    // Si el cliente es nuevo y NUNCA ha comprado una mensualidad
     if (plan.length === 0) {
       return res.status(200).json({
         planActual: 'NINGUNO',
         diasRestantes: 0,
-        placaVehiculo: placaBaseDeDatos, // 👈 Ahora sí devuelve su placa real registrada
+        placaVehiculo: placaBaseDeDatos, 
         validoHasta: 'N/A'
       });
     }
@@ -77,7 +110,7 @@ exports.getClienteDashboard = async (req, res) => {
     const diasRestantesCalculados = infoPlan.dias_restantes ? Math.max(0, infoPlan.dias_restantes) : 0;
     const esVigente = diasRestantesCalculados > 0;
 
-    // Si hay mensualidad, priorizamos la placa del plan; si no viene ahí, usamos la nativa del cliente
+    // Si hay mensualidad, priorizamos la placa del plan; si no viene ahí, usamos la del cliente
     let placaRespuesta = infoPlan.placa_vehiculo || placaBaseDeDatos;
     if (placaRespuesta === 'NULL' || placaRespuesta === 'null' || placaRespuesta.toString().trim() === '') {
       placaRespuesta = placaBaseDeDatos;
@@ -86,20 +119,24 @@ exports.getClienteDashboard = async (req, res) => {
     return res.status(200).json({
       planActual: esVigente ? 'PREMIUM' : 'NINGUNO',
       diasRestantes: diasRestantesCalculados,
-      placaVehiculo: placaRespuesta, // 👈 Envío blindado de datos reales
+      placaVehiculo: placaRespuesta, 
       validoHasta: esVigente && infoPlan.fecha_final ? infoPlan.fecha_final : 'N/A'
     });
 
   } catch (error) {
-    console.error('Error al consultar información del cliente:', error);
+    console.error('❌ Error al consultar información del dashboard cliente:', error);
     return res.status(500).json({ message: 'Error al consultar información del cliente.' });
   }
 };
 
+// ==========================================
+// 3. OBTENER PERFIL COMPLETO DEL CLIENTE
+// ==========================================
 exports.getPerfilCliente = async (req, res) => {
   const idCliente = req.user.id;
+
   try {
-    // 🕵️‍♂️ CORREGIDO: Añadimos 'placa_vehiculo' al SELECT de la tabla clientes
+    // Traer la información del perfil del cliente
     const [data] = await db.query(
       `SELECT 
         id_cliente, 
@@ -119,13 +156,13 @@ exports.getPerfilCliente = async (req, res) => {
     if (data.length === 0) return res.status(404).json({ message: 'Cliente no encontrado' });
     const cliente = data[0];
 
-    // Buscamos si de pronto tiene una placa registrada en mensualidades
+    // Buscamos complementariamente si tiene una placa registrada en la tabla de mensualidades
     const [vehiculos] = await db.query(
       'SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1', 
       [idCliente]
     );
     
-    // Evaluamos de forma segura cuál placa usar y limpiamos valores nulos
+    // Evaluamos de forma segura cuál placa usar y limpiamos valores nulos de strings
     let placaFinal = 'Sin Placa';
     
     if (vehiculos.length > 0 && vehiculos[0].placa_vehiculo) {
@@ -138,7 +175,7 @@ exports.getPerfilCliente = async (req, res) => {
       placaFinal = 'Sin Placa';
     }
     
-    // 🚀 ENVIAMOS EL JSON COMPLETO AL FRONTEND
+    // Enviamos la respuesta estructurada y limpia de nulos al Front
     res.json({
       nombre_cliente: cliente.nombre_cliente,
       correo: cliente.correo,
@@ -152,7 +189,7 @@ exports.getPerfilCliente = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error al obtener perfil del cliente:', error);
+    console.error('❌ Error al obtener perfil del cliente:', error);
     res.status(500).json({ message: 'Error al obtener perfil' });
   }
 };

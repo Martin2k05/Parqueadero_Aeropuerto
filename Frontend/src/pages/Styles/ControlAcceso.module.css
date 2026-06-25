@@ -11,11 +11,13 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  width: 100%;
 }
 
 .header h1 {
   font-size: 1.5rem;
   font-weight: 700;
+  color: #ffffff;
 }
 
 .header p {
@@ -23,28 +25,42 @@
   color: #94a3b8;
 }
 
-.alert {
-  background-color: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
-  padding: 12px;
-  border-radius: 12px;
-  max-width: 896px;
-  font-size: 0.875rem;
-}
-
 .panel {
   background-color: #111a36;
   border: 1px solid #1e2d5a;
   padding: 24px;
   border-radius: 12px;
-  max-width: 896px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .panel h2 {
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 16px;
+  color: #cbd5e1;
+}
+
+.listHeader {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.searchBar {
+  width: 100%;
+  background-color: #18254b;
+  border: 1px solid #233568;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.searchBar:focus {
+  outline: none;
+  border-color: #3b82f6;
 }
 
 .formInline {
@@ -80,6 +96,7 @@
   padding: 12px 16px;
   color: #ffffff;
   font-size: 1rem;
+  box-sizing: border-box;
 }
 
 .inputGroup input:focus, .inputGroup select:focus {
@@ -91,10 +108,10 @@
   background-color: #059669;
   color: #ffffff;
   font-weight: 600;
-  padding: 14px 24px;
+  padding: 12px 24px;
   border-radius: 12px;
-  font-size: 1rem;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.2);
+  border: none;
+  cursor: pointer;
   white-space: nowrap;
 }
 
@@ -121,7 +138,7 @@
 .vehiculoInfo h3 {
   font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  color: #ffffff;
 }
 
 .vehiculoInfo p {
@@ -137,6 +154,8 @@
   font-size: 0.75rem;
   padding: 8px 16px;
   border-radius: 12px;
+  border: none;
+  cursor: pointer;
 }
 
 .salidaBtn:hover {
@@ -146,4 +165,67 @@
 .vacio {
   font-size: 0.875rem;
   color: #64748b;
+  text-align: center;
+  padding: 10px;
+}
+
+/* --- ESTILOS PARA LA CÁMARA (NUEVO) --- */
+.cameraWrapper {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cameraInput {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.cameraBtn {
+  background-color: #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cameraBtn:hover {
+  background-color: #2563eb;
+}
+
+.cameraBtn:disabled {
+  background-color: #1e2d5a;
+  cursor: not-allowed;
+  color: #64748b;
+}
+
+.modalCamara {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #090f24;
+  padding: 20px;
+  border-radius: 15px;
+  z-index: 1000;
+  border: 2px solid #3b82f6;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 9999;
+}
+.modalContent {
+  background: #111a36; padding: 20px; border-radius: 12px; width: 400px;
 }

@@ -16,6 +16,7 @@
 .header h1 {
   font-size: 1.5rem;
   font-weight: 700;
+  color: #ffffff;
 }
 
 .header p {
@@ -23,10 +24,11 @@
   color: #94a3b8;
 }
 
+/* --- Metricas --- */
 .metricasGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 20px;
 }
 
 @media (min-width: 768px) {
@@ -38,35 +40,32 @@
 .metricaCard {
   background-color: #111a36;
   border: 1px solid #1e2d5a;
-  padding: 16px;
-  border-radius: 12px;
+  padding: 24px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-}
-
-.icon {
-  font-size: 1.25rem;
-  margin-bottom: 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 15px; /* Esto separa el H3 del P */
 }
 
 .metricaCard h3 {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
+  margin: 0;
+  color: #ffffff;
+  line-height: 1;
 }
 
 .metricaCard p {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: #94a3b8;
-  margin-top: 4px;
+  margin: 0;
+  text-transform: capitalize;
+  text-align: center;
 }
 
-.metricaSub {
-  font-size: 10px !important;
-  color: #64748b !important;
-  margin-top: 2px;
-}
-
+/* --- Gráficos --- */
 .chartsGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -83,103 +82,61 @@
   background-color: #111a36;
   border: 1px solid #1e2d5a;
   padding: 24px;
-  border-radius: 12px;
+  border-radius: 16px;
+  height: 350px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chartCard h3 {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #cbd5e1;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-.barChartContainer {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: 128px;
-  padding-top: 16px;
-  border-bottom: 1px solid #334155;
-}
-
-.barGroup {
+/* --- Actividad Reciente --- */
+.listaActividadInterna {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.barBlue {
-  width: 8px;
-  background-color: #3b82f6;
-  border-radius: 4px 4px 0 0;
-}
-
-.barCyan {
-  width: 24px;
-  background-color: #06b6d4;
-  border-radius: 4px 4px 0 0;
-}
-
-.barGroup span {
-  font-size: 10px;
-  color: #64748b;
-  margin-top: 8px;
-}
-
-.actividadCard {
-  background-color: #111a36;
-  border: 1px solid #1e2d5a;
-  padding: 24px;
-  border-radius: 12px;
-}
-
-.actividadCard h3 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #cbd5e1;
-  margin-bottom: 16px;
-}
-
-.listaActividad {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: 300px;
 }
 
 .itemActividad {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #18254b;
-  padding: 16px;
+  background-color: #0f172a;
+  padding: 18px 24px;
   border-radius: 12px;
   border: 1px solid #233568;
 }
 
-.itemInfo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  display: inline-block;
+  margin-right: 12px;
 }
 
-.itemText p {
-  font-size: 0.875rem;
-  font-weight: 500;
+.textoPlaca {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
 }
 
-.itemText span {
-  font-size: 0.75rem;
+.horaTexto {
+  font-size: 0.85rem;
   color: #94a3b8;
-  display: block;
-  margin-top: 2px;
 }
 
-.statusTag {
-  font-size: 0.75rem;
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-weight: 500;
+.loading { 
+  padding: 32px; 
+  text-align: center; 
+  color: #fff; 
+  font-size: 1.1rem;
 }

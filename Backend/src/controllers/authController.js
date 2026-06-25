@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // ==========================================
-// CONTROLADOR DE LOGIN INTEGRADO Y ESCALABLE
+// 1. CONTROLADOR DE LOGIN INTEGRADO Y ESCALABLE
 // ==========================================
 exports.login = async (req, res) => {
   const { correo, contrasena } = req.body;
@@ -21,7 +21,7 @@ exports.login = async (req, res) => {
     let idRef = null;
     let placaDetectada = 'Sin Placa';
 
-    // 1. Buscar en la tabla de usuarios internos (Admin / Operario)
+    // Buscar en la tabla de usuarios internos (Admin / Operario)
     const [users] = await db.query(
       'SELECT u.*, r.nombre_rol FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol WHERE u.correo = ?',
       [correo]
@@ -33,7 +33,7 @@ exports.login = async (req, res) => {
       idRef = usuarioEncontrado.id_usuario;
       console.log(`👤 Usuario interno detectado con rol: ${rolUsuario}`);
     } 
-    // 2. Si no es un usuario interno, buscar en la tabla de clientes
+    // Si no es un usuario interno, buscar en la tabla de clientes
     else {
       console.log('🔍 No se encontró en usuarios. Buscando en tabla clientes...');
       const [clients] = await db.query('SELECT * FROM clientes WHERE correo = ? ORDER BY id_cliente DESC LIMIT 1', [correo]);
@@ -48,7 +48,7 @@ exports.login = async (req, res) => {
         if (usuarioEncontrado.placa_vehiculo && usuarioEncontrado.placa_vehiculo !== "NULL" && usuarioEncontrado.placa_vehiculo !== "null") {
           placaDetectada = usuarioEncontrado.placa_vehiculo;
         } else {
-          // Buscar de emergencia en mensualidades
+          // Buscar de emergencia en mensualidades si la celda de la tabla clientes está vacía
           const [vehiculoRows] = await db.query(
             'SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1', 
             [idRef]
@@ -64,8 +64,7 @@ exports.login = async (req, res) => {
       return res.status(404).json({ message: 'Credenciales incorrectas o usuario no registrado.' });
     }
 
-    // Validar contraseña
-    // ... justo después de encontrar el usuario y antes de bcrypt ...
+    // Validar contraseña desencriptándola con bcrypt
     const hashContrasena = usuarioEncontrado.contrasena;
     const passwordCorrect = await bcrypt.compare(contrasena, hashContrasena);
     
@@ -78,6 +77,7 @@ exports.login = async (req, res) => {
       return res.status(500).json({ message: 'Error de configuración en el servidor.' });
     }
 
+    // Firmar Token de sesión
     const token = jwt.sign(
       { id: idRef, correo: usuarioEncontrado.correo, rol: rolUsuario },
       process.env.JWT_SECRET,
@@ -104,13 +104,14 @@ exports.login = async (req, res) => {
 };
 
 // ==========================================
-// CONTROLADOR INTEGRADO DE REGISTRO
+// 2. CONTROLADOR INTEGRADO DE REGISTRO CON PLAN MENSUAL
 // ==========================================
 exports.registerCliente = async (req, res) => {
   const { nombreCompleto, identificacion, correo, telefono, calle, carrera, numero, barrio, contrasena } = req.body;
   const placa_vehiculo = req.body.placaVehiculo || req.body.placa_vehiculo || null;
 
   try {
+    // Verificar unicidad del correo electrónico
     const [existCheck] = await db.query(
       'SELECT correo FROM clientes WHERE correo = ? UNION SELECT correo FROM usuarios WHERE correo = ?', 
       [correo, correo]
@@ -119,28 +120,50 @@ exports.registerCliente = async (req, res) => {
       return res.status(400).json({ message: 'El correo electrónico ya está registrado.' });
     }
 
+    // Hashear contraseña provista
     const salt = await bcrypt.genSalt(10);
     const hashContrasena = await bcrypt.hash(contrasena, salt);
 
+    let placaFormateada = null;
     if (placa_vehiculo) {
-      const placaFormateada = placa_vehiculo.trim().toUpperCase().substring(0, 10);
+      placaFormateada = placa_vehiculo.trim().toUpperCase().substring(0, 10);
+      // Registrar la existencia de la placa en la tabla de vehículos
       await db.query('INSERT IGNORE INTO vehiculos (placa_vehiculo) VALUES (?)', [placaFormateada]);
     }
 
-    await db.query(
-      `INSERT INTO clientes (nombre_cliente, identificacion, correo, dir_barrio, dir_calle, dir_carrera, dir_numero, telefono, contrasena, placa_vehiculo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nombreCompleto, identificacion, correo, barrio, calle, carrera, numero, telefono, hashContrasena, placa_vehiculo ? placa_vehiculo.trim().toUpperCase().substring(0, 10) : null]
+    // Registrar los datos del cliente
+    const [clientResult] = await db.query(
+      `INSERT INTO clientes (nombre_cliente, identificacion, correo, dir_barrio, dir_calle, dir_carrera, dir_numero, telefono, contrasena, placa_vehiculo) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nombreCompleto, identificacion, correo, barrio, calle, carrera, numero, telefono, hashContrasena, placaFormateada]
     );
 
-    res.status(201).json({ message: 'Registro exitoso. Ahora puedes iniciar sesión y comprar tu plan.' });
+    const idCliente = clientResult.insertId;
+    
+    // Configurar fechas para activar un plan mensual automático por defecto (30 días)
+    const fechaInicio = new Date();
+    const fechaFinal = new Date();
+    fechaFinal.setDate(fechaFinal.getDate() + 30);
+
+    // Insertar la mensualidad vinculada al operador por defecto (ID: 1)
+    if (placaFormateada) {
+      await db.query(
+        'INSERT INTO mensualidades (id_cliente, placa_vehiculo, id_usuario, fecha_inicio, fecha_final) VALUES (?, ?, 1, ?, ?)',
+        [idCliente, placaFormateada, fechaInicio, fechaFinal]
+      );
+      res.status(201).json({ message: 'Cliente registrado con éxito y plan mensual de 30 días activado.' });
+    } else {
+      res.status(201).json({ message: 'Registro exitoso sin vehículo. Ahora puedes iniciar sesión y comprar tu plan.' });
+    }
+
   } catch (error) {
-    console.error('Error en el registro del cliente:', error);
+    console.error('❌ Error en el registro del cliente:', error);
     res.status(500).json({ message: 'Error en el registro del cliente.' });
   }
 };
 
 // ==========================================
-// CONTROLADOR INTEGRADO DE PERFIL (GET)
+// 3. CONTROLADOR INTEGRADO DE PERFIL (GET)
 // ==========================================
 exports.obtenerPerfil = async (req, res) => {
   const idCliente = req.user.id;
@@ -158,7 +181,7 @@ exports.obtenerPerfil = async (req, res) => {
     const infoCliente = rows[0];
     let placaFinal = infoCliente.placa_vehiculo;
 
-    // Control estricto de nulos para la placa
+    // Control estricto de nulos para la placa antes de responder al front
     if (!placaFinal || placaFinal === "NULL" || placaFinal === "null" || placaFinal === "") {
       const [vehiculoRows] = await db.query(
         `SELECT placa_vehiculo FROM mensualidades WHERE id_cliente = ? ORDER BY id_mensualidad DESC LIMIT 1`, 
@@ -167,19 +190,17 @@ exports.obtenerPerfil = async (req, res) => {
       placaFinal = (vehiculoRows.length > 0 && vehiculoRows[0].placa_vehiculo) ? vehiculoRows[0].placa_vehiculo : "Sin Placa";
     }
     
-    // Asignamos la placa limpia antes de enviar el JSON
     infoCliente.placa_vehiculo = placaFinal;
-    
     return res.json(infoCliente);
 
   } catch (error) {
-    console.error('Error al obtener perfil:', error);
+    console.error('❌ Error al obtener perfil:', error);
     return res.status(500).json({ message: 'Error al traer los datos de perfil.' });
   }
 };
 
 // ==========================================
-// CONTROLADOR INTEGRADO DE ACTUALIZACIÓN (PUT)
+// 4. CONTROLADOR INTEGRADO DE ACTUALIZACIÓN (PUT)
 // ==========================================
 exports.actualizarPerfil = async (req, res) => {
   const idUsuario = req.user.id;
@@ -194,6 +215,7 @@ exports.actualizarPerfil = async (req, res) => {
     let queryCheck = '';
     let paramsCheck = [];
 
+    // Validar cruzado que ningún otro usuario o cliente use el correo que se intenta actualizar
     if (rolUsuario === 'Cliente') {
       queryCheck = 'SELECT correo FROM clientes WHERE correo = ? AND id_cliente != ? UNION SELECT correo FROM usuarios WHERE correo = ?';
       paramsCheck = [correo, idUsuario, correo];
@@ -208,6 +230,13 @@ exports.actualizarPerfil = async (req, res) => {
     }
 
     if (rolUsuario === 'Cliente') {
+      const placaFinal = placa || placa_vehiculo || null;
+      const placaFormateada = placaFinal ? placaFinal.trim().toUpperCase().substring(0, 10) : null;
+
+      if (placaFormateada) {
+        await db.query('INSERT IGNORE INTO vehiculos (placa_vehiculo) VALUES (?)', [placaFormateada]);
+      }
+
       await db.query(
         `UPDATE clientes SET 
           correo = ?, 
@@ -227,7 +256,7 @@ exports.actualizarPerfil = async (req, res) => {
           dir_carrera || null,
           dir_numero || null,
           nombre || nombreCompleto || nombre_cliente || null,
-          placa || placa_vehiculo || null,
+          placaFormateada,
           idUsuario
         ]
       );
@@ -246,7 +275,7 @@ exports.actualizarPerfil = async (req, res) => {
 };
 
 // ==========================================
-// CONTROLADOR CAMBIAR CONTRASEÑA
+// 5. CONTROLADOR CAMBIAR CONTRASEÑA
 // ==========================================
 exports.cambiarContrasena = async (req, res) => {
   const actual = req.body.password || req.body.actual;
@@ -285,7 +314,7 @@ exports.cambiarContrasena = async (req, res) => {
     res.json({ message: '¡Contraseña modificada correctamente!' });
 
   } catch (error) {
-    console.error(error);
+    console.error('❌ Error interno al cambiar la contraseña:', error);
     res.status(500).json({ message: 'Error interno del servidor al cambiar la contraseña.' });
   }
 };
