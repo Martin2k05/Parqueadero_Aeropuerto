@@ -2,6 +2,10 @@
   display: flex;
   height: 100vh;
   background-color: #090f24;
+  /* SOLUCIÓN: Hereda de manera estricta la fuente Inter y el suavizado para evitar el grosor falso */
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .content {

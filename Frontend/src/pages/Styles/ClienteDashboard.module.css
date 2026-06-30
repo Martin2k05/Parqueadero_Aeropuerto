@@ -3,6 +3,10 @@
   height: 100vh;
   background-color: #0b132b;
   color: #ffffff;
+  /* SOLUCIÓN: Forza a la Sidebar a mantener la fuente estilizada en esta pestaña */
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .content {

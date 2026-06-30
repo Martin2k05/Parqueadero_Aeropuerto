@@ -8,6 +8,10 @@
   background-color: #090f24;
   position: relative;
   overflow: hidden;
+  /* SOLUCIÓN: Hereda la fuente correcta y suavizado de texto desde el Login */
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Destello de luz decorativo de fondo tipo AeroPuerto de noche */
@@ -35,6 +39,7 @@
   box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 1;
+  box-sizing: border-box;
 }
 
 .iconWrapper {
@@ -104,6 +109,7 @@
   padding: 14px 18px;
   color: #ffffff;
   font-size: 1rem;
+  box-sizing: border-box;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -135,7 +141,7 @@
 
 .submitBtn:hover {
   transform: scale(1.01);
-  box-shadow: 0 6px 24px rgba(0, 11f, 255, 0.5);
+  box-shadow: 0 6px 24px rgba(0, 191, 255, 0.5); /* Corregido el typo en el color hexadecimal */
   filter: brightness(1.05);
 }
 
