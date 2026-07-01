@@ -39,9 +39,11 @@ const OperarioDashboard = () => {
 
   if (cargando || !dash) return <div className={styles.loading}>Cargando centro de control...</div>;
 
-  // Adaptación flexible: Detecta el nombre de la propiedad unificada del backend o usa la anterior como fallback
   const datosGraficoIngresos = (dash.ingresosSemanales || dash.ingresosData || [])
-    .map(d => ({ ...d, total: Math.max(0, parseFloat(d.total || 0)) }));
+    .map(d => ({ 
+      ...d, 
+      total: Math.max(0, parseFloat(d.ingresos !== undefined ? d.ingresos : (d.total || 0))) 
+    }));
 
   return (
     <div className={styles.layout}>
@@ -63,7 +65,7 @@ const OperarioDashboard = () => {
         </div>
 
         <div className={styles.chartsGrid}>
-          {/* Gráfico de Ingresos Optimizado */}
+          {/* Gráfico de Ingresos con Azul Oscuro */}
           <div className={styles.chartCard}>
             <h3>Flujo de Ingresos Semanal</h3>
             <ResponsiveContainer width="100%" height={250}>
@@ -81,24 +83,25 @@ const OperarioDashboard = () => {
                   fontSize={12} 
                   tickLine={false} 
                   axisLine={false} 
-                  domain={[0, 'auto']} // Ajuste dinámico inteligente para evitar recortes de diseño
+                  domain={[0, 'auto']} 
+                  allowDecimals={false} 
                 />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#0f172a', 
-                    borderColor: '#10b981', 
+                    borderColor: '#3b82f6', 
                     borderRadius: '8px',
                     color: '#fff' 
                   }}
-                  itemStyle={{ color: '#10b981', fontWeight: 'bold' }}
+                  itemStyle={{ color: '#60a5fa', fontWeight: 'bold' }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="total" 
-                  stroke="#10b981" 
+                  stroke="#3b82f6" 
                   strokeWidth={4} 
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4, stroke: '#fff' }}
-                  activeDot={{ r: 8, strokeWidth: 0 }} 
+                  dot={{ fill: '#1e40af', strokeWidth: 2, r: 4, stroke: '#fff' }}
+                  activeDot={{ r: 7, strokeWidth: 0 }} 
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -107,21 +110,42 @@ const OperarioDashboard = () => {
           {/* Actividad Reciente */}
           <div className={styles.chartCard}>
             <h3>Actividad Reciente</h3>
-            <div className={styles.listaActividadInterna}>
-              {(dash.actividadReciente || []).map((act, i) => (
-                <div key={i} className={styles.itemActividad}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span className={styles.dot}></span>
-                    <span className={styles.textoPlaca}>Placa: {act.placa_vehiculo}</span>
+            <div 
+              className={styles.listaActividadInterna}
+              style={{
+                maxHeight: '240px',
+                overflowY: 'auto',
+                paddingRight: '6px',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#2563eb #111827'
+              }}
+            >
+              {(dash.actividadReciente || []).map((act, i) => {
+                return (
+                  <div key={i} className={styles.itemActividad} style={{ padding: '14px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span 
+                        className={styles.dot} 
+                        style={{ 
+                          backgroundColor: '#3b82f6',
+                          boxShadow: '0 0 8px rgba(59, 130, 246, 0.6)',
+                          width: '8px',
+                          height: '8px'
+                        }}
+                      ></span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span className={styles.textoPlaca} style={{ fontSize: '15px', fontWeight: '700', color: '#ffffff', letterSpacing: '0.5px' }}>
+                          Placa: {act.placa_vehiculo}
+                        </span>
+                        {/* 🛠️ SOLUCIÓN: Mostramos la fecha/hora formateada que viene de la base de datos debajo de la placa */}
+                        <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>
+                          {act.fecha_formateada || 'Sin fecha asignada'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <span className={styles.horaTexto}>
-                    {act.hora_evento 
-                      ? new Date(act.hora_evento).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : 'N/A'
-                    }
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

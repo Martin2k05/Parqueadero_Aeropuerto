@@ -28,13 +28,29 @@ exports.getOperarioAdminDashboard = async (req, res) => {
       };
     });
 
-    // Ingresos Semanales (Consulta real usando WEEKDAY para compatibilidad con cualquier idioma de MySQL)
-    const [ingresosRaw] = await db.query('SELECT WEEKDAY(fecha_salida) as num_dia, SUM(calculo_tarifa) as total FROM control_i_s WHERE fecha_salida >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) GROUP BY WEEKDAY(fecha_salida)');
+    // 🛠️ SOLUCIÓN TOTAL: Calculamos el Lunes de esta semana usando JavaScript local (Evita desfases de MySQL)
+    const hoy = new Date();
+    const diaSemana = hoy.getDay(); // 0 = Domingo, 1 = Lunes, etc.
+    const diferenciaLunes = diaSemana === 0 ? -6 : 1 - diaSemana; 
+    
+    const lunesEstaSemana = new Date(hoy);
+    lunesEstaSemana.setDate(hoy.getDate() + diferenciaLunes);
+    
+    // Formateamos la fecha obtenida a 'YYYY-MM-DD' de forma limpia
+    const fechaLunesString = lunesEstaSemana.toISOString().split('T')[0];
+
+    // Enviamos la fecha calculada directamente como parámetro (?) a la consulta SQL
+    const [ingresosRaw] = await db.query(`
+      SELECT WEEKDAY(fecha_ingreso) as num_dia, COUNT(*) as total 
+      FROM control_i_s 
+      WHERE fecha_ingreso >= ? 
+      GROUP BY WEEKDAY(fecha_ingreso)
+    `, [fechaLunesString]);
     
     const diasNombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
     const ingresosSemanales = diasNombres.map((nombre, index) => ({
       dia: nombre,
-      ingresos: parseFloat(ingresosRaw.find(r => r.num_dia === index)?.total || 0)
+      ingresos: parseInt(ingresosRaw.find(r => r.num_dia === index)?.total || 0, 10)
     }));
 
     // Actividad reciente (Muestra los últimos movimientos con el evento y la fecha/hora formateada)

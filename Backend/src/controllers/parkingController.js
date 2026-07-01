@@ -99,7 +99,7 @@ exports.registrarIngreso = async (req, res) => {
 };
 
 // ==========================================
-// 3. REGISTRAR SALIDA Y LIQUIDACIÓN
+// 3. REGISTRAR SALIDA Y LIQUIDACIÓN (CORREGIDO CON TU BD)
 // ==========================================
 exports.registrarSalida = async (req, res) => {
   const { placaVehiculo, metodoPago } = req.body;
@@ -109,6 +109,7 @@ exports.registrarSalida = async (req, res) => {
   const now = new Date();
 
   try {
+    // 1. Verificar si el vehículo se encuentra activo dentro del parqueadero
     const [registros] = await db.query(`
       SELECT c.id_control_i_s, c.hora_ingreso, t.tipo_vehiculo, t.valor_primera_hora, t.valor_hora_2_a_12
       FROM control_i_s c
@@ -118,23 +119,51 @@ exports.registrarSalida = async (req, res) => {
     if (registros.length === 0) return res.status(404).json({ message: 'Vehículo no encontrado activo.' });
 
     const registro = registros[0];
-    const diffMs = now - new Date(registro.hora_ingreso);
-    const diffMinutos = Math.max(1, Math.round(diffMs / 60000));
-    
-    const totalAPagar = (registro.tipo_vehiculo === 'Bicicleta') ? 700 : (Math.ceil(diffMinutos/60) * registro.valor_primera_hora);
+    let totalAPagar = 0;
+    let esMensual = false;
 
+    // 2. CONSULTA ADAPTADA A TU MER: Revisa si la placa tiene una mensualidad vigente hoy
+    const [planActivo] = await db.query(`
+      SELECT id_mensualidad FROM mensualidades 
+      WHERE placa_vehiculo = ? 
+        AND CURDATE() BETWEEN fecha_inicio AND fecha_final`, [ident]);
+
+    if (planActivo.length > 0) {
+      // Si tiene una mensualidad vigente, el costo es de $0 automáticamente
+      totalAPagar = 0;
+      esMensual = true;
+    } else {
+      // Si no tiene mensualidad, se calcula la tarifa normal por tiempo de estadía
+      const diffMs = now - new Date(registro.hora_ingreso);
+      const diffMinutos = Math.max(1, Math.round(diffMs / 60000));
+      
+      totalAPagar = (registro.tipo_vehiculo === 'Bicicleta') 
+        ? 700 
+        : (Math.ceil(diffMinutos / 60) * registro.valor_primera_hora);
+    }
+
+    // 3. Registrar la salida en la tabla control_i_s
     await db.query(
       'UPDATE control_i_s SET hora_salida = ?, fecha_salida = CURDATE(), calculo_tarifa = ? WHERE id_control_i_s = ?',
       [now, totalAPagar, registro.id_control_i_s]
     );
 
+    // 4. Si el cobro es mayor a cero se ingresa el registro a la tabla de pagos
     if (totalAPagar > 0) {
       await db.query('INSERT INTO pagos (id_control_i_s, metodo_pago) VALUES (?, ?)', [registro.id_control_i_s, metodoPago || 'Efectivo']);
     }
 
-    res.json({ message: `Salida procesada. Total: $${totalAPagar}`, totalCobrado: totalAPagar });
+// 5. Enviar respuesta estructurada para el frontend 
+    res.json({ 
+      message: esMensual 
+        ? `Cliente Mensual Activo: Salida registrada sin cobro ($0) para la placa ${ident}` 
+        : `Salida procesada. Total: $${totalAPagar}`, 
+      totalCobrado: totalAPagar,
+      esMensual: esMensual 
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error interno en salida.' });
+    console.error("❌ ERROR EN SALIDA:", error);
+    res.status(500).json({ message: 'Error interno en salida.', detalle: error.message });
   }
 };
 

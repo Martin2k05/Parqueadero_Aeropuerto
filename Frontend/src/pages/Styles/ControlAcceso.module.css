@@ -45,10 +45,11 @@
   color: #cbd5e1;
 }
 
+/* 🛠️ AJUSTADO: Mayor espacio inferior para empujar la lista de vehículos hacia abajo */
 .listHeader {
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
+  margin-bottom: 28px;
 }
 
 .searchBar {
@@ -76,7 +77,8 @@
 @media (min-width: 768px) {
   .formInline {
     flex-direction: row;
-    align-items: flex-end;
+    /* 🛠️ AJUSTADO: Alineación al centro para que inputs y botones compartan el mismo eje horizontal */
+    align-items: center;
   }
 }
 
@@ -108,25 +110,32 @@
   border-color: #3b82f6;
 }
 
+/* 🛠️ AJUSTADO: Altura fija y flexbox interno para alineación perfecta */
 .submitBtn {
   background-color: #059669;
   color: #ffffff;
   font-weight: 600;
-  padding: 12px 24px;
+  height: 46px; 
+  padding: 0 24px; 
   border-radius: 12px;
   border: none;
   cursor: pointer;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .submitBtn:hover {
   background-color: #10b981;
 }
 
+/* 🛠️ AJUSTADO: Se añade un margen superior para dar un respiro extra respecto al input */
 .listaVehiculos {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 8px;
 }
 
 .itemVehiculo {
@@ -191,15 +200,20 @@
   cursor: pointer;
 }
 
+/* 🛠️ AJUSTADO: Altura idéntica al botón de Registrar para mantener simetría completa */
 .cameraBtn {
   background-color: #3b82f6;
   color: #ffffff;
   font-weight: 600;
-  padding: 12px 24px;
+  height: 46px;
+  padding: 0 24px;
   border-radius: 12px;
   border: none;
   cursor: pointer;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cameraBtn:hover {
@@ -230,6 +244,10 @@
   display: flex; justify-content: center; align-items: center;
   z-index: 9999;
 }
+
 .modalContent {
-  background: #111a36; padding: 20px; border-radius: 12px; width: 400px;
+  background: #111a36; 
+  padding: 20px; 
+  border-radius: 12px; 
+  width: 400px;
 }
